@@ -2,20 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Pretendard", sans-serif;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+}
+
+h1 {
+  @apply text-4xl font-bold; /* H1은 크고 두꺼운 글씨 */
+  line-height: 2;
+}
+
+h2 {
+  @apply text-3xl font-semibold;
+  line-height: 2;
+}
+
+h3 {
+  @apply text-2xl font-medium; /* H3는 작은 크기와 미디엄 폰트 */
+  line-height: 2;
+}
+
+h1,
+h2,
+p {
+  line-height: 2;
+  text-align: left;
+}
+
+pre {
+  border-radius: 8px; /* 모서리 둥글게 */
+  line-height: 1.75; /* 라인 높이 */
+  padding: 0.25rem 0.5rem; /* 안쪽 여백 */
+  background-color: #3a3a3a;
+  color: #ffffff;
+  overflow: auto;
+}
+
+hr {
+  border: 1px solid #e8e8e8;
+  margin: 1rem 0;
+}
+
+/* ✅ Unordered List (불릿 리스트) 스타일 유지 */
+ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem; /* 왼쪽 여백 */
+}
+
+/* ✅ Ordered List (숫자 리스트) 스타일 유지 */
+ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  list-style-position: inside !important;
+  padding-left: 1.5rem !important;
+  margin-left: 0 !important;
+}
+
+.ProseMirror li {
+  display: list-item !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  line-height: 1.5 !important;
+}
+
+.ProseMirror li > p {
+  display: inline !important;
+}
+
+.ProseMirror li::marker {
+  font-size: 1rem !important;
+  margin-right: 0.5rem !important;
+}
+
+.ProseMirror {
+  outline: none;
+}
+
+blockquote {
+  @apply bg-gray-100 border-l-4 border-gray-500 p-4 my-4;
+}
+
+:root {
+  --border-color-container: #e8e8e8;
+  --border-color-edit: #c4c4c4;
+  --border-color-logout: #ff9494;
+  --border-color-input: #e0e0e0;
+  --border-color-switch-public: #721c24;
+  --border-color-switch-private: #1e7e34;
+
+  --background-color-edit: #e0e0e0;
+  --background-color-logout: #ffcccc;
+  --background-color-kakaologin: #f7e600;
+  --background-color-googlelogin: #ffffff;
+  --background-color-input: #f5f5f5;
+  --background-color-nav-button: #000000;
+  --background-color-nav-logout: #ffcccc;
+  --background-color-switch-public: #f8d7da;
+  --background-color-switch-private: #d4edda;
+
+  --radius-button: 8px;
+  --radius-container: 12px;
+
+  --padding-button: 10px 1rem;
+  --padding-container: 1rem;
+
+  --text-size-main-title: 24px;
+  --text-size-container-title: 18px;
+  --text-size-statistical-container-title: 14px;
+
+  --text-color-logout: #cf3c3c;
+  --text-color-edit: #333333;
+  --text-color-metrics: #666666;
+  --text-color-button: #ffffff;
+  --text-color-switch-public: #721c24;
+  --text-color-switch-private: #155724;
+
+  --width-profile-image: 34px;
+  --height-profile-image: 34px;
 }
