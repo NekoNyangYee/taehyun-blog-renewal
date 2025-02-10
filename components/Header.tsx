@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "./ui/button";
 import Image from "next/image";
+import LogoIcon from "./icons/LogoIcon";
 
 export default function Header() {
     const { session, addSession } = useSessionStore();
@@ -36,8 +37,8 @@ export default function Header() {
     };
 
     return (
-        <div className="flex justify-between p-container border border-b-containerColor w-full">
-            <p>ss</p>
+        <div className="flex justify-between items-center p-3 border border-b-containerColor w-full">
+            <LogoIcon />
             {session ? (
                 <div>
                     <Image
@@ -47,14 +48,14 @@ export default function Header() {
                         alt="profile image"
                     />
                     <Button onClick={logoutHandler} className="border border-logoutColor p-button">
-                        logout
+                        로그아웃
                     </Button>
                 </div>
             ) : (
                 <>
                     <Link
                         href="/login"
-                        className="border border-containerColor p-button"
+                        className="border border-containerColor p-button rounded-button bg-black text-white"
                         onClick={() => console.log(session)}
                     >
                         로그인
