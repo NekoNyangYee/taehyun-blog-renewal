@@ -9,7 +9,9 @@ import Image from "next/image";
 import LogoIcon from "./icons/LogoIcon";
 
 export default function Header() {
-    const { session, addSession } = useSessionStore();
+    const { addSession } = useSessionStore();
+
+    const session = useSessionStore((state) => state.session);
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -56,7 +58,6 @@ export default function Header() {
                     <Link
                         href="/login"
                         className="border border-containerColor p-button rounded-button bg-black text-white"
-                        onClick={() => console.log(session)}
                     >
                         로그인
                     </Link>

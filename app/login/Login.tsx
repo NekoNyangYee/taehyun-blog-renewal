@@ -1,5 +1,6 @@
 "use client";
 
+import LogoIcon from "@components/components/icons/LogoIcon";
 import { Button } from "@components/components/ui/button";
 import { supabase } from "@components/lib/supabaseClient";
 import Image from "next/image";
@@ -53,9 +54,13 @@ export default function LoginDetailPage() {
         );
     }
     return (
-        <div className="flex justify-center w-full min-h-screen">
-            <div className="border border-containerColor p-container h-auto my-auto rounded-container max-w-[572px]">
-                <h1 className="text-mainTitle">로그인</h1>
+        <div className="flex justify-center w-full min-h-screen px-4">
+            <div className="flex flex-col gap-4 border border-containerColor p-container h-auto my-auto rounded-container max-w-lg w-full md:max-w-[562px]">
+                <div className="flex flex-col items-center">
+                    <LogoIcon />
+                    <h1 className="text-mainTitle">Welcome to visit my Devlog!</h1>
+                    <label className="text-metricsText">로그인 하여 여러분의 첫 공감 및 댓글을 남겨보세요!</label>
+                </div>
                 <div className="flex flex-col gap-2">
                     <Button
                         className="flex justify-center gap-2 border border-slate-containerColor bg-google p-button rounded-button"
