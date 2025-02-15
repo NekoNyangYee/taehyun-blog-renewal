@@ -11,7 +11,7 @@ export default function LoginDetailPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const redirectTo = window.location.origin;
+    const redirectTo = typeof window !== "undefined" ? window.location.origin : "";
 
     // ✅ 소셜 로그인 핸들러
     const handleSocialLogin = async (provider: "google" | "kakao") => {
