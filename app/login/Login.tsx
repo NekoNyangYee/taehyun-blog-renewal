@@ -11,37 +11,46 @@ export default function LoginDetailPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const redirectTo = typeof window !== "undefined" ? window.location.origin : "";
+    const getRedirectURL = () => {
+        if (typeof window === "undefined") {
+            return process.env.NEXT_PUBLIC_REDIRECT_URL || "http://localhost:3000/";
+        }
+        return `${window.location.origin}/`; // ✅ 메인 블로그는 /로 이동
+    };
 
-    // ✅ 소셜 로그인 핸들러
     const handleSocialLogin = async (provider: "google" | "kakao") => {
         setIsLoading(true);
+
         try {
-            const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
+            const redirectTo = getRedirectURL();
+
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider,
+                options: { redirectTo },
+            });
+
             if (error) {
-                alert("로그인 실패하였어요. 다시 시도해주세요.");
-                console.log("로그인 실패:", error);
+                alert("로그인 실패. 다시 시도해주세요.");
+                console.error("로그인 에러:", error.message);
+                setIsLoading(false);
             }
-        } catch (error) {
-            alert("로그인 시도 중 문제가 발생하였어요. 다시 시도해주세요.");
-            console.log("소셜 로그인 중 오류 발생:", error);
-        } finally {
+        } catch (err) {
+            alert("로그인 중 문제가 발생했습니다.");
+            console.error("handleSocialLogin 에러:", err);
             setIsLoading(false);
         }
     };
 
-    // ✅ 현재 세션 확인 및 자동 로그인
     const hasUserSession = useCallback(async () => {
         try {
             const { data, error } = await supabase.auth.getSession();
-
             if (error) {
-                console.log("세션을 가져오는 중 문제가 발생하였어요.", error);
+                console.log("세션 가져오기 에러:", error);
                 return;
             }
 
             if (data.session) {
-                router.push("/");
+                router.replace("/");
             }
         } catch (error) {
             console.log("세션 확인 중 오류 발생:", error);
