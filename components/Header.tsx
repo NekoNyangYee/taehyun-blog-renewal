@@ -10,7 +10,6 @@ import LogoIcon from "./icons/LogoIcon";
 
 export default function Header() {
     const { addSession } = useSessionStore();
-
     const session = useSessionStore((state) => state.session);
 
     useEffect(() => {
@@ -39,30 +38,35 @@ export default function Header() {
     };
 
     return (
-        <div className="flex justify-between items-center p-3 border border-b-containerColor w-full">
-            <LogoIcon />
-            {session ? (
-                <div>
-                    <Image
-                        src={session.user?.user_metadata.avatar_url || ""}
-                        width={32}
-                        height={32}
-                        alt="profile image"
-                    />
-                    <Button onClick={logoutHandler} className="border border-logoutColor p-button">
-                        로그아웃
-                    </Button>
+        <div className="w-full border-b border-containerColor bg-background fixed top-0 bg-white/70 backdrop-blur-md">
+            <div className="max-w-[90rem] mx-auto flex justify-between items-center px-3 h-[65px]">
+                <div className="flex items-center gap-4">
+                    <LogoIcon />
                 </div>
-            ) : (
-                <>
-                    <Link
-                        href="/login"
-                        className="border border-containerColor p-button rounded-button bg-black text-white"
-                    >
-                        로그인
-                    </Link>
-                </>
-            )}
+                <div className="flex items-center gap-4">
+                    {session ? (
+                        <>
+                            <Image
+                                src={session.user?.user_metadata.avatar_url || ""}
+                                width={32}
+                                height={32}
+                                alt="profile image"
+                                className="rounded-full"
+                            />
+                            <Button onClick={logoutHandler} className="border border-logoutColor p-button">
+                                로그아웃
+                            </Button>
+                        </>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="text-black"
+                        >
+                            로그인
+                        </Link>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
