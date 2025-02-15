@@ -11,11 +11,13 @@ export default function LoginDetailPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const redirectTo = window.location.origin;
+
     // ✅ 소셜 로그인 핸들러
     const handleSocialLogin = async (provider: "google" | "kakao") => {
         setIsLoading(true);
         try {
-            const { error } = await supabase.auth.signInWithOAuth({ provider });
+            const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
             if (error) {
                 alert("로그인 실패하였어요. 다시 시도해주세요.");
                 console.log("로그인 실패:", error);
