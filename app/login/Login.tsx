@@ -15,7 +15,7 @@ export default function LoginDetailPage() {
         if (typeof window === "undefined") {
             return process.env.NEXT_PUBLIC_REDIRECT_URL || "http://localhost:3000/";
         }
-        return `${window.location.origin}/`; // ✅ 메인 블로그는 /로 이동
+        return `${window.location.origin}/`;
     };
 
     const handleSocialLogin = async (provider: "google" | "kakao") => {
@@ -23,6 +23,7 @@ export default function LoginDetailPage() {
 
         try {
             const redirectTo = getRedirectURL();
+            console.log("🔹 메인 페이지 로그인 Redirecting to:", redirectTo);
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,
