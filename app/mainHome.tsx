@@ -32,7 +32,7 @@ export default function MainHome() {
     }, []);
 
     return (
-        <div className="pt-[65px] h-screen flex flex-1">
+        <div className="pt-[65px] min-h-screen flex flex-1">
             <NavBar />
             <div className="flex-1 p-6">
                 <h1 className="text-2xl font-bold">메인 컨텐츠</h1>
