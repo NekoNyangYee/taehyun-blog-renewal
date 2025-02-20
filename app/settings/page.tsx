@@ -1,8 +1,8 @@
 import React from "react";
-import SettingPage from "./Setting";
+import SettingDetailPage from "./Setting";
 
-export default function LoginPage() {
+export default function SettingPage() {
     return (
-        <SettingPage />
+        <SettingDetailPage />
     );
 }

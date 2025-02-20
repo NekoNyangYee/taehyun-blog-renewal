@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css";
 import Header from "@components/components/Header";
+import NavBar from "@components/components/NavBar";
 
 export const metadata: Metadata = {
   title: "TaeHyun's Devlog",
@@ -14,9 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="flex pt-[65px] min-h-screen">
         <Header />
-        {children}
+        <div className="flex flex-1 max-w-[90rem] mx-auto w-full">
+          <NavBar />
+          {children}
+        </div>
       </body>
     </html>
   );

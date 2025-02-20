@@ -7,8 +7,11 @@ import { useEffect } from "react";
 import { Button } from "./ui/button";
 import Image from "next/image";
 import LogoIcon from "./icons/LogoIcon";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
+    const currentPath: string = usePathname();
+
     const { addSession } = useSessionStore();
     const session = useSessionStore((state) => state.session);
 
@@ -39,9 +42,11 @@ export default function Header() {
 
     return (
         <div className="w-full border-b border-containerColor bg-background fixed top-0 bg-white/70 backdrop-blur-md">
-            <div className="max-w-[90rem] mx-auto flex justify-between items-center px-3 h-[65px]">
+            <div className="max-w-[90rem] mx-auto flex justify-between items-center px-container h-[65px]">
                 <div className="flex items-center gap-4">
-                    <LogoIcon />
+                    <Link href="/">
+                        <LogoIcon />
+                    </Link>
                 </div>
                 <div className="flex items-center gap-4">
                     {session ? (
@@ -58,12 +63,16 @@ export default function Header() {
                             </Button>
                         </>
                     ) : (
-                        <Link
-                            href="/login"
-                            className="text-black"
-                        >
-                            로그인
-                        </Link>
+                        <>
+                            {currentPath !== "/login" && (
+                                <Link
+                                    href="/login"
+                                    className="text-black"
+                                >
+                                    로그인
+                                </Link>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
