@@ -6,11 +6,11 @@ import { usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import CategoryButtons from "@components/components/CAtegoryButtons";
 
-export default function PostsPage() {
+export default function CategoryPage({ params }: { params: { category: string } }) {
     const pathname = usePathname();
     const { posts, fetchPosts } = usePostStore();
     const { myCategories, fetchCategories } = useCategoriesStore();
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(params.category);
 
     useEffect(() => {
         // ✅ posts가 없을 때만 fetchPosts() 실행 (불필요한 API 호출 방지)
@@ -29,16 +29,13 @@ export default function PostsPage() {
     }, [pathname]); // ✅ pathname이 변경될 때만 실행
 
 
-    // ✅ 필터링 로직 수정
-    const filteredPosts = selectedCategory
-        ? posts.filter((post) => {
-            const category = myCategories.find((cat) => cat.id === post.category_id);
-            return category?.name.toLowerCase() === selectedCategory.toLowerCase();
-        })
-        : posts;
+    const filteredPosts = posts.filter((post) => {
+        const category = myCategories.find((cat) => cat.id === post.category_id);
+        return category?.name.toLowerCase() === selectedCategory?.toLowerCase();
+    });
 
     return (
-        <div className="p-6 w-full flex flex-col gap-2">
+        <div className="p-6 w-full">
             <h2 className="text-2xl font-bold">게시물</h2>
             <CategoryButtons selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">

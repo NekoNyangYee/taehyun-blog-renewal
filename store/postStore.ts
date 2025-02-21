@@ -25,8 +25,8 @@ export const usePostStore = create<PostsProps>((set) => ({
     posts: [],
     fetchPosts: async () => {
         const { data, error } = await supabase.from("posts")
-            .select(`id, title, contents, author_id, status, visibility, created_at, updated_at, 
-                     view_count, like_count, category_id, author_name`);
+            .select("*")
+            .order("created_at", { ascending: false });
 
         if (error) {
             console.log("게시물 불러오는 도중 에러", error);
