@@ -1,63 +1,92 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import CategoryButtons from "@components/components/CAtegoryButtons";
+import CategoryButtons from "@components/components/CategoryButtons";
+import { EyeIcon, HeartIcon } from "lucide-react";
+import { formatDate } from "@components/lib/util/dayjs";
 
 export default function PostsPage() {
     const pathname = usePathname();
     const { posts, fetchPosts } = usePostStore();
     const { myCategories, fetchCategories } = useCategoriesStore();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [filteredPosts, setFilteredPosts] = useState(posts);
+    const [isPending, startTransition] = useTransition(); // ✅ 부드러운 전환을 위해 useTransition 사용
 
     useEffect(() => {
-        // ✅ posts가 없을 때만 fetchPosts() 실행 (불필요한 API 호출 방지)
         if (posts.length === 0) {
             fetchPosts();
         }
         fetchCategories();
+    }, []);
 
-        // ✅ URL에서 카테고리 추출 & 디코딩하여 상태 업데이트
+    useEffect(() => {
         const categoryFromURL = decodeURIComponent(pathname.split("/").pop() || "");
-        if (categoryFromURL && categoryFromURL !== "posts") {
+        if (categoryFromURL && categoryFromURL !== "posts" && selectedCategory !== categoryFromURL) {
             setSelectedCategory(categoryFromURL);
-        } else {
+        } else if (categoryFromURL === "posts") {
             setSelectedCategory(null);
         }
-    }, [pathname]); // ✅ pathname이 변경될 때만 실행
+    }, [pathname]);
 
-
-    // ✅ 필터링 로직 수정
-    const filteredPosts = selectedCategory
-        ? posts.filter((post) => {
-            const category = myCategories.find((cat) => cat.id === post.category_id);
-            return category?.name.toLowerCase() === selectedCategory.toLowerCase();
-        })
-        : posts;
+    // ✅ `selectedCategory`가 변경될 때 `filteredPosts`를 즉시 업데이트 (로딩 지연 방지)
+    useEffect(() => {
+        if (selectedCategory === null) {
+            setFilteredPosts(posts); // 🔥 전체 게시물로 바로 변경
+        } else {
+            startTransition(() => {
+                setFilteredPosts(
+                    posts.filter((post) => {
+                        const category = myCategories.find((cat) => cat.id === post.category_id);
+                        return category?.name.toLowerCase() === selectedCategory.toLowerCase();
+                    })
+                );
+            });
+        }
+    }, [selectedCategory, posts]);
 
     return (
-        <div className="p-6 w-full flex flex-col gap-2">
+        <div className="p-container w-full flex flex-col gap-2">
             <h2 className="text-2xl font-bold">게시물</h2>
             <CategoryButtons selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
-                {filteredPosts.length > 0 ? (
-                    filteredPosts.map((post) => (
-                        <div key={post.id} className="max-w-sm rounded-lg shadow-lg border border-gray-700 overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-center object-cover w-auto h-40 bg-gray-800">
-                                <img src="/react.png" alt="Post Thumbnail" className="h-full w-full object-cover" />
+
+            {isPending ? (
+                <p className="text-gray-500 text-center mt-4">로딩 중...</p>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {filteredPosts.length > 0 ? (
+                        filteredPosts.map((post) => (
+                            <div key={post.id} className="max-w-sm rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
+                                <div className="flex items-center justify-center object-cover w-auto h-40 bg-gray-800">
+                                    <img src="/react.png" alt="Post Thumbnail" className="h-full w-full object-cover" />
+                                </div>
+                                <div className="flex flex-col gap-2 p-container">
+                                    <div className="flex flex-col gap-2">
+                                        <h2 className="text-lg font-bold truncate">{post.title}</h2>
+                                        <p className="text-sm text-gray-600">by {post.author_name}</p>
+                                        <p className="text-sm text-gray-600">{formatDate(post.created_at)}</p>
+                                    </div>
+                                    <div className="flex gap-4 text-[14px]">
+                                        <div className="flex gap-2 items-center">
+                                            <EyeIcon size={14} />
+                                            {post.view_count}
+                                        </div>
+                                        <div className="flex gap-2 items-center">
+                                            <HeartIcon size={14} />
+                                            {post.like_count}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex flex-col gap-2 p-4">
-                                <h2 className="text-lg font-bold">{post.title}</h2>
-                                <p className="text-sm text-gray-600">by {post.author_name} · 작성일: {post.created_at}</p>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-gray-500 col-span-full text-center mt-6">해당 카테고리에 게시물이 없습니다.</p>
-                )}
-            </div>
+                        ))
+                    ) : (
+                        <p className="text-gray-500 col-span-full text-center mt-6">해당 카테고리에 게시물이 없습니다.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

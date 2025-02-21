@@ -29,7 +29,6 @@ export default function MainHome() {
                 await addUserToProfileTable(userSessionData);
                 console.log("유저 추가 완료");
             }
-
         }
 
         fetchPosts();
@@ -43,7 +42,7 @@ export default function MainHome() {
                 {posts.length > 0 && posts.map(post => (
                     <div key={post.id} className="bg-white shadow-md rounded-lg p-4 flex gap-4 items-center border border-gray-200">
                         <Image
-                            src="/nextjs.jpg"
+                            src="/nextjs.png"
                             width={64}
                             height={64}
                             alt="NextJS 이미지"
