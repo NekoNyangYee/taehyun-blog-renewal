@@ -11,7 +11,7 @@ export default function CategoryButtons({ selectedCategory, setSelectedCategory 
     const { myCategories } = useCategoriesStore();
 
     return (
-        <div className="flex gap-2">
+        <div className="flex gap-2 py-2 overflow-x-auto">
             <Button
                 onClick={() => {
                     if (selectedCategory !== null) {

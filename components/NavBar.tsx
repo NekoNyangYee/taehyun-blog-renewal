@@ -23,7 +23,7 @@ export default function NavBar() {
     return (
         <>
             {currentPath !== "/login" && (
-                <aside className="w-64 max-h-(100vh-65px) p-container flex flex-col gap-2">
+                <aside className="w-64 max-h-(100vh-65px) p-container flex flex-col gap-2 max-xl:hidden">
                     <p className="text-lg font-semibold">사이드바</p>
                     <Link href={"/"} className="flex gap-2 items-center py-4 justify-start rounded-button w-full">
                         <HomeIcon size={18} />
