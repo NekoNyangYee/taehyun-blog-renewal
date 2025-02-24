@@ -83,7 +83,7 @@ export default function LoginDetailPage() {
     }
 
     return (
-        <div className="flex justify-center w-full min-h-screen px-4">
+        <div className="flex justify-center w-full px-4">
             <div className="flex flex-col gap-4 border border-containerColor p-container h-auto my-auto rounded-container max-w-lg w-full md:max-w-[562px]">
                 <div className="flex flex-col items-center">
                     <LoginPageLogoIcon />

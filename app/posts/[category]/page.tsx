@@ -8,6 +8,7 @@ import CategoryButtons from "@components/components/CategoryButtons";
 import { formatDate } from "@components/lib/util/dayjs";
 import { EyeIcon, HeartIcon, MessageSquareTextIcon } from "lucide-react";
 import { useCommentStore } from "@components/store/commentStore";
+import categoryImages from "@components/lib/util/postThumbnail";
 
 export default function CategoryPage({ params }: { params: { category: string } }) {
     const pathname = usePathname();
@@ -41,36 +42,40 @@ export default function CategoryPage({ params }: { params: { category: string } 
             <CategoryButtons selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
             {filteredPosts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {filteredPosts.map((post) => (
-                        <div key={post.id} className=" rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-center object-cover w-auto h-40 bg-gray-800">
-                                <img src="/react.png" alt="Post Thumbnail" className="h-full w-full object-cover" />
-                            </div>
-                            <div className="flex flex-col gap-2 p-container">
-                                <div className="flex flex-col gap-2">
-                                    <h2 className="text-lg font-bold truncate">{post.title}</h2>
-                                    <p className="text-sm text-gray-600">by {post.author_name}</p>
-                                    <p className="text-sm text-gray-600">{formatDate(post.created_at)}</p>
+                    {filteredPosts.map((post) => {
+                        const category = myCategories.find((cat) => cat.id === post.category_id);
+                        const imageUrl = categoryImages[category?.name || "/default.png"];
+                        return (
+                            <div key={post.id} className=" rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
+                                <div className="flex items-center justify-center object-cover w-auto h-40 bg-gray-800">
+                                    <img src={imageUrl || "/dafault.png"} alt="Post Thumbnail" className="h-full w-full object-cover" />
                                 </div>
-                                <div className="flex justify-between pt-container">
-                                    <div className="flex gap-4 text-[14px]">
-                                        <div className="flex gap-2 items-center">
-                                            <EyeIcon size={14} />
-                                            {post.view_count}
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <HeartIcon size={14} />
-                                            {post.like_count}
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <MessageSquareTextIcon size={14} />
-                                            {comments.filter((comment) => comment.post_id === post.id).length}
+                                <div className="flex flex-col gap-2 p-container">
+                                    <div className="flex flex-col gap-2">
+                                        <h2 className="text-lg font-bold truncate">{post.title}</h2>
+                                        <p className="text-sm text-gray-600">by {post.author_name}</p>
+                                        <p className="text-sm text-gray-600">{formatDate(post.created_at)}</p>
+                                    </div>
+                                    <div className="flex justify-between pt-container">
+                                        <div className="flex gap-4 text-[14px]">
+                                            <div className="flex gap-2 items-center">
+                                                <EyeIcon size={14} />
+                                                {post.view_count}
+                                            </div>
+                                            <div className="flex gap-2 items-center">
+                                                <HeartIcon size={14} />
+                                                {post.like_count}
+                                            </div>
+                                            <div className="flex gap-2 items-center">
+                                                <MessageSquareTextIcon size={14} />
+                                                {comments.filter((comment) => comment.post_id === post.id).length}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <p className="text-gray-500 text-center mt-6">해당 카테고리에 게시물이 없습니다.</p>

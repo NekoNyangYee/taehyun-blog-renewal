@@ -1,44 +1,56 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import { Button } from "./ui/button";
 import { usePostStore } from "@components/store/postStore";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@components/components/ui/select";
+import { cn } from "@components/lib/utils";
 
-export default function CategoryButtons({ selectedCategory, setSelectedCategory }: { selectedCategory: string | null, setSelectedCategory: (category: string | null) => void }) {
+interface CategorySelectProps {
+    selectedCategory: string | null;
+    setSelectedCategory: (category: string | null) => void;
+}
+
+export default function CategorySelect<CategorySelectType extends CategorySelectProps>({ selectedCategory, setSelectedCategory }: CategorySelectType) {
     const router = useRouter();
     const { posts } = usePostStore();
     const { myCategories } = useCategoriesStore();
 
     return (
-        <div className="flex gap-2 py-2 overflow-x-auto">
-            <Button
-                onClick={() => {
-                    if (selectedCategory !== null) {
-                        setSelectedCategory(null);
-                        router.push("/posts");
-                    }
-                }}
-                className={`px-4 py-2 rounded-lg border border-containerColor flex gap-2 ${!selectedCategory ? "bg-black text-white" : "border-containerColor text-gray-500 hover:bg-gray-200"}`}
-            >
-                전체
-                <p>({posts.length})</p>
-            </Button>
-            {myCategories.map((category) => (
-                <Button
-                    key={category.id}
-                    onClick={() => {
-                        if (selectedCategory !== category.name) {
-                            setSelectedCategory(category.name);
-                            router.push(`/posts/${encodeURIComponent(category.name)}`);
-                        }
-                    }}
-                    className={`px-4 py-2 rounded-lg border border-containerColor flex gap-2 ${selectedCategory === category.name ? "bg-black text-white" : "border-containerColor text-gray-500 hover:bg-gray-200"}`}
-                >
-                    {category.name}
-                    <p>({posts.filter(post => post.category_id === category.id).length})</p>
-                </Button>
-            ))}
-        </div>
+        <Select
+            value={selectedCategory || "all"}
+            onValueChange={(value) => {
+                if (value === "all") {
+                    setSelectedCategory(null);
+                    router.push("/posts");
+                } else {
+                    setSelectedCategory(value);
+                    router.push(`/posts/${encodeURIComponent(value)}`);
+                }
+            }}
+        >
+            <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="카테고리 선택" />
+            </SelectTrigger>
+            <SelectContent className={cn("w-auto bg-white")}>
+                <SelectGroup>
+                    <SelectLabel>카테고리</SelectLabel>
+                    <SelectItem value="all">전체 ({posts.length})</SelectItem>
+                    {myCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                            {category.name} ({posts.filter(post => post.category_id === category.id).length})
+                        </SelectItem>
+                    ))}
+                </SelectGroup>
+            </SelectContent>
+        </Select>
     );
 }

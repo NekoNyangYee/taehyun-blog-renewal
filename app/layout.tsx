@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css";
 import Header from "@components/components/Header";
 import NavBar from "@components/components/NavBar";
+import { Suspense } from "react";
+import PageLoading from "@components/components/loading/PageLoading";
 
 export const metadata: Metadata = {
   title: "TaeHyun's Devlog",
@@ -14,12 +16,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body className="flex flex-col h-screen">
         <Header />
         <div className="flex flex-1 max-w-[90rem] mx-auto w-full pt-[65px]">
           <NavBar />
-          {children}
+          <Suspense fallback={<PageLoading />}>
+            {children}
+          </Suspense>
         </div>
       </body>
     </html>
