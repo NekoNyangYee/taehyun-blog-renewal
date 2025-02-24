@@ -1,7 +1,7 @@
 import { supabase } from "@components/lib/supabaseClient";
 import { create } from "zustand";
 
-interface PostState {
+export interface PostState {
     id: number;
     title: string;
     contents: string;

@@ -73,15 +73,6 @@ export default function LoginDetailPage() {
         };
     }, [hasUserSession, router]);
 
-    if (isLoading) {
-        return (
-            <div className="flex flex-col gap-4 items-center justify-center h-screen bg-white">
-                <div className="w-12 h-12 border-t-2 border-b-2 border-gray-600 rounded-full animate-spin"></div>
-                <p className="text-metricsText">로그인 시도하는 중...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex justify-center w-full px-4">
             <div className="flex flex-col gap-4 border border-containerColor p-container h-auto my-auto rounded-container max-w-lg w-full md:max-w-[562px]">

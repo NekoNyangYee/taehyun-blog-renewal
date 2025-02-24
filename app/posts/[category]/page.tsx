@@ -9,6 +9,7 @@ import { formatDate } from "@components/lib/util/dayjs";
 import { EyeIcon, HeartIcon, MessageSquareTextIcon } from "lucide-react";
 import { useCommentStore } from "@components/store/commentStore";
 import categoryImages from "@components/lib/util/postThumbnail";
+import Link from "next/link";
 
 export default function CategoryPage({ params }: { params: { category: string } }) {
     const pathname = usePathname();
@@ -22,6 +23,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
             fetchPosts();
         }
         fetchCategories();
+        fetchComments();
     }, []);
 
     useEffect(() => {
@@ -45,35 +47,39 @@ export default function CategoryPage({ params }: { params: { category: string } 
                     {filteredPosts.map((post) => {
                         const category = myCategories.find((cat) => cat.id === post.category_id);
                         const imageUrl = categoryImages[category?.name || "/default.png"];
+                        const currentCategoryName = myCategories.find((cat) => cat.id === post.category_id)?.name;
+
                         return (
-                            <div key={post.id} className=" rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
-                                <div className="flex items-center justify-center object-cover w-auto h-40 bg-gray-800">
-                                    <img src={imageUrl || "/dafault.png"} alt="Post Thumbnail" className="h-full w-full object-cover" />
-                                </div>
-                                <div className="flex flex-col gap-2 p-container">
-                                    <div className="flex flex-col gap-2">
-                                        <h2 className="text-lg font-bold truncate">{post.title}</h2>
-                                        <p className="text-sm text-gray-600">by {post.author_name}</p>
-                                        <p className="text-sm text-gray-600">{formatDate(post.created_at)}</p>
+                            <Link key={post.id} href={`/posts/${currentCategoryName}/${post.id}`}>
+                                <div key={post.id} className=" rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
+                                    <div className="flex items-center justify-center object-cover w-auto h-40 bg-gray-800">
+                                        <img src={imageUrl || "/dafault.png"} alt="Post Thumbnail" className="h-full w-full object-cover" />
                                     </div>
-                                    <div className="flex justify-between pt-container">
-                                        <div className="flex gap-4 text-[14px]">
-                                            <div className="flex gap-2 items-center">
-                                                <EyeIcon size={14} />
-                                                {post.view_count}
-                                            </div>
-                                            <div className="flex gap-2 items-center">
-                                                <HeartIcon size={14} />
-                                                {post.like_count}
-                                            </div>
-                                            <div className="flex gap-2 items-center">
-                                                <MessageSquareTextIcon size={14} />
-                                                {comments.filter((comment) => comment.post_id === post.id).length}
+                                    <div className="flex flex-col gap-2 p-container">
+                                        <div className="flex flex-col gap-2">
+                                            <h2 className="text-lg font-bold truncate">{post.title}</h2>
+                                            <p className="text-sm text-metricsText">by {post.author_name}</p>
+                                            <p className="text-sm text-metricsText">{formatDate(post.created_at)}</p>
+                                        </div>
+                                        <div className="flex justify-between pt-container">
+                                            <div className="flex gap-4 text-[14px]">
+                                                <div className="flex gap-2 items-center text-metricsText">
+                                                    <EyeIcon size={14} />
+                                                    {post.view_count}
+                                                </div>
+                                                <div className="flex gap-2 items-center text-metricsText">
+                                                    <HeartIcon size={14} />
+                                                    {post.like_count}
+                                                </div>
+                                                <div className="flex gap-2 items-center text-metricsText">
+                                                    <MessageSquareTextIcon size={14} />
+                                                    {comments.filter((comment) => comment.post_id === post.id).length}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>
