@@ -1,15 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { usePostStore } from "@components/store/postStore";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { PostState, usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import CategoryButtons from "@components/components/CategoryButtons";
 import { EyeIcon, HeartIcon, MessageSquareTextIcon } from "lucide-react";
-import { formatDate } from "@components/lib/util/dayjs";
+import dayjs, { formatDate } from "@components/lib/util/dayjs";
 import { useCommentStore } from "@components/store/commentStore";
 import categoryImages from "@components/lib/util/postThumbnail";
 import Link from "next/link";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@components/components/ui/select";
+import { cn } from "@components/lib/utils";
 
 export default function PostsPage() {
     const pathname = usePathname();
@@ -18,6 +20,7 @@ export default function PostsPage() {
     const { comments, fetchComments } = useCommentStore();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [filteredPosts, setFilteredPosts] = useState(posts);
+    const [sortOrder, setSortOrder] = useState<string>("new-sort");
     const [isPending, startTransition] = useTransition(); // ✅ 부드러운 전환을 위해 useTransition 사용
 
     useEffect(() => {
@@ -53,17 +56,48 @@ export default function PostsPage() {
         }
     }, [selectedCategory, posts]);
 
+    const sortedPosts = useMemo(() => {
+        return [...filteredPosts].sort((a, b) => {
+            const dateA = dayjs(a.created_at).toDate();
+            const dateB = dayjs(b.created_at).toDate();
+
+            if (sortOrder === "new-sort") {
+                return dateB.getTime() - dateA.getTime();
+            } else if (sortOrder === "old-sort") {
+                return dateA.getTime() - dateB.getTime();
+            } else if (sortOrder === "max-view-sort") {
+                return (b.view_count ?? 0) - (a.view_count ?? 0);
+            } else if (sortOrder === "min-view-sort") {
+                return (a.view_count ?? 0) - (b.view_count ?? 0);
+            }
+            return 0;
+        });
+    }, [filteredPosts, sortOrder]); // 🔥 posts와 정렬 기준이 바뀔 때만 재계산
+
     return (
         <div className="p-container w-full min-h-screen flex flex-col flex-1 gap-2">
             <h2 className="text-2xl font-bold">게시물</h2>
-            <CategoryButtons selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
+            <div className="flex justify-between items-center gap-4">
+                <CategoryButtons selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
+                <Select value={sortOrder} onValueChange={setSortOrder}>
+                    <SelectTrigger className="w-[100px]">
+                        <SelectValue placeholder="정렬" />
+                    </SelectTrigger>
+                    <SelectContent className={cn("w-auto bg-white")}>
+                        <SelectItem value="new-sort">최신순</SelectItem>
+                        <SelectItem value="old-sort">오래된순</SelectItem>
+                        <SelectItem value="max-view-sort">조회수 높은순</SelectItem>
+                        <SelectItem value="min-view-sort">조회수 낮은순</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
 
             {isPending ? (
                 <p className="text-gray-500 text-center mt-4">로딩 중...</p>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
-                    {filteredPosts.length > 0 ? (
-                        filteredPosts.map((post) => {
+                    {sortedPosts.length > 0 ? (
+                        sortedPosts.map((post) => {
                             const category = myCategories.find((cat) => cat.id === post.category_id);
                             const imageUrl = categoryImages[category?.name || "/default.png"];
                             const currentCategoryName = myCategories.find((cat) => cat.id === post.category_id)?.name;
@@ -71,7 +105,7 @@ export default function PostsPage() {
                             return (
                                 <Link key={post.id} href={`/posts/${currentCategoryName}/${post.id}`}>
                                     <div key={post.id} className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
-                                        <div className="flex items-center justify-center object-cover w-auto h-44 bg-gray-800">
+                                        <div className="flex items-center justify-center object-cover w-auto lg:h-44 md:h-48 bg-gray-800">
                                             <img src={imageUrl} alt="Post Thumbnail" className="h-full w-full object-cover" />
                                         </div>
                                         <div className="flex flex-col gap-2 p-container">

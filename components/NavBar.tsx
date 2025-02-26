@@ -34,7 +34,7 @@ export default function NavBar() {
         <>
             {currentPath !== "/login" && (
                 <aside
-                    className="sticky left-0 top-[65px] h-[calc(100vh-65px)] bg-white flex flex-col justify-between gap-2 z-0 max-xl:hidden"
+                    className="sticky left-0 top-[65px] h-[calc(100vh-65px)] bg-white flex flex-col justify-between gap-2 z-0 max-2xl:hidden"
                 >
                     {/* ✅ 너비 고정된 컨테이너 */}
                     <div className="p-container w-60 flex flex-col">
