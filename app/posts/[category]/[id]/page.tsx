@@ -21,7 +21,7 @@ interface HeadingGroup {
 };
 
 export default function PostDetailPage() {
-    const { posts, fetchPosts } = usePostStore();
+    const { posts, fetchPosts, incrementViewCount } = usePostStore();
     const { myCategories } = useCategoriesStore();
     const pathname = usePathname();
     const router = useRouter();
@@ -29,6 +29,7 @@ export default function PostDetailPage() {
     const [post, setPost] = useState<PostState | null>(null);
     const [headings, setHeadings] = useState<{ id: string; text: string; tag: string }[]>([]);
     const [updatedContent, setUpdatedContent] = useState<string>("");
+    const [hasIncremented, setHasIncremented] = useState<boolean>(false);
 
     useEffect(() => {
         if (posts.length === 0) {
@@ -37,6 +38,11 @@ export default function PostDetailPage() {
             const postId = pathname.split("/").pop();
             const selectedPost = posts.find((p) => String(p.id) === postId);
             setPost(selectedPost || null);
+
+            if (selectedPost && !hasIncremented) {
+                incrementViewCount(selectedPost.id);
+                setHasIncremented(true);
+            }
         }
     }, [posts, pathname]);
 
@@ -159,7 +165,7 @@ export default function PostDetailPage() {
                     </div>
                 </div>
             </div>
-            <div className="flex flex-col lg:flex-row gap-6 mt-6">
+            <div className="flex flex-col-reverse lg:flex-row gap-6 mt-6">
                 <article className="flex-1 min-w-0">
                     <div className="leading-relaxed">
                         <div dangerouslySetInnerHTML={{ __html: updatedContent }} />

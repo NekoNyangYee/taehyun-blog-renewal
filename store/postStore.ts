@@ -19,6 +19,7 @@ export interface PostState {
 interface PostsProps {
     posts: PostState[];
     fetchPosts: () => Promise<void>;
+    incrementViewCount: (postId: number) => Promise<void>;
 };
 
 export const usePostStore = create<PostsProps>((set) => ({
@@ -50,5 +51,26 @@ export const usePostStore = create<PostsProps>((set) => ({
                 })),
             })
         }
-    }
+    },
+    incrementViewCount: async (postId: string | number) => {
+        const postIdNum = Number(postId);
+
+        const { data, error } = await supabase
+            .from("posts")
+            .select("view_count")
+            .eq("id", postIdNum)
+            .single();
+
+        if (error) {
+            console.log("조회수 증가 중 에러", error);
+        };
+
+        if (data) {
+            const viewCount = data.view_count || 0;
+            await supabase
+                .from("posts")
+                .update({ view_count: viewCount + 1 })
+                .eq("id", postIdNum);
+        };
+    },
 }));
