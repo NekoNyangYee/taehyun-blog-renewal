@@ -1,7 +1,7 @@
 "use client";
 
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon } from "lucide-react";
+import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon, LogInIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -36,7 +36,6 @@ export default function NavBar() {
                 <aside
                     className="sticky left-0 top-[65px] h-[calc(100vh-65px)] bg-white flex flex-col justify-between gap-2 z-0 max-2xl:hidden"
                 >
-                    {/* ✅ 너비 고정된 컨테이너 */}
                     <div className="p-container w-60 flex flex-col">
                         <Link href={"/"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/")}`}>
                             <HomeIcon size={18} />
@@ -51,14 +50,19 @@ export default function NavBar() {
                             <span className="truncate">설정</span>
                         </Link>
                     </div>
-                    {session && (
-                        <div className="w-full p-container border-t border-containerColor">
+                    <div className="w-full p-container border-t border-containerColor">
+                        {session ? (
                             <Button onClick={handleLogout} className="w-full h-10 p-button border border-logoutColor bg-logoutButton text-logoutText flex items-center gap-2">
                                 <LogOutIcon size={18} />
                                 로그아웃
                             </Button>
-                        </div>
-                    )}
+                        ) : (
+                            <Link href="/login" className="w-full h-10 p-button border border-editButton rounded-button bg-editButton text-loginText flex items-center justify-center gap-2">
+                                <LogInIcon size={18} />
+                                로그인
+                            </Link>
+                        )}
+                    </div>
                 </aside>
             )}
         </>
