@@ -7,7 +7,7 @@ import { useCategoriesStore } from "@components/store/categoriesStore";
 import categoryImages from "@components/lib/util/postThumbnail";
 import { formatDate } from "@components/lib/util/dayjs";
 import Link from "next/link";
-import { CalendarRangeIcon, EyeIcon, TagIcon } from "lucide-react";
+import { ArrowLeftCircle, ArrowRightCircle, CalendarRangeIcon, EyeIcon, TagIcon } from "lucide-react";
 
 interface Heading {
     id: string;
@@ -140,6 +140,11 @@ export default function PostDetailPage() {
         return category?.name || "카테고리 없음";
     };
 
+    const currentPageIndex = posts.findIndex((p) => p.id === post?.id);
+
+    const previousPage = currentPageIndex > 0 ? posts[currentPageIndex - 1] : null;
+    const nextPage = currentPageIndex < posts.length - 1 ? posts[currentPageIndex + 1] : null;
+
     return (
         <div className="h-full w-full max-w-[1200px] mx-auto p-4">
             <div className="relative w-full h-72 overflow-hidden rounded-lg">
@@ -169,6 +174,36 @@ export default function PostDetailPage() {
                 <article className="flex-1 min-w-0">
                     <div className="leading-relaxed">
                         <div dangerouslySetInnerHTML={{ __html: updatedContent }} />
+                        <div className="flex flex-col md:flex-row gap-4 w-full my-4">
+                            {previousPage && (
+                                <Link
+                                    href={`/posts/${category?.name}/${previousPage.id}`}
+                                    className="bg-searchInput p-container rounded-container flex-1 w-full max-w-full md:max-w-[50%] border border-gray-300"
+                                >
+                                    <div className="flex gap-4 items-center justify-between">
+                                        <ArrowLeftCircle size={34} className="text-gray-500" />
+                                        <div className="flex flex-col">
+                                            <p className="text-sm text-gray-700 text-right">이전 게시물</p>
+                                            <p className="truncate max-w-[200px] overflow-hidden text-ellipsis text-right font-bold">{previousPage.title}</p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            )}
+                            {nextPage && (
+                                <Link
+                                    href={`/posts/${category?.name}/${nextPage.id}`}
+                                    className="bg-searchInput p-container rounded-container flex-1 w-full max-w-full md:max-w-[50%] border border-gray-300"
+                                >
+                                    <div className="flex gap-4 items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <p className="text-sm text-gray-700">다음 게시물</p>
+                                            <p className="truncate max-w-[200px] overflow-hidden text-ellipsis font-bold">{nextPage.title}</p>
+                                        </div>
+                                        <ArrowRightCircle size={34} className="text-gray-500" />
+                                    </div>
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </article>
                 {headingGroups.length > 0 && (

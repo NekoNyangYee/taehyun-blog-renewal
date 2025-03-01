@@ -11,7 +11,6 @@ import MobileNavBar from "./MobileNav";
 
 export default function Header() {
     const { addSession } = useSessionStore();
-    const session = useSessionStore((state) => state.session);
     const [isMobileNavVisible, setMobileNavVisible] = useState(false);
 
     const toggleMobileNav = () => {
@@ -49,7 +48,6 @@ export default function Header() {
 
     return (
         <>
-            {/* Header */}
             <div className="w-full border-b border-containerColor bg-background fixed top-0 bg-white/70 backdrop-blur-md z-50">
                 <div className="max-w-[90rem] mx-auto flex justify-between items-center px-container h-[65px]">
                     <div className="flex items-center gap-4">

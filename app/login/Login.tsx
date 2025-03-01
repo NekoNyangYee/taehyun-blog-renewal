@@ -82,22 +82,22 @@ export default function LoginDetailPage() {
                     <label className="text-metricsText">로그인 하여 여러분의 첫 공감 및 댓글을 남겨보세요!</label>
                 </div>
                 <div className="flex flex-col gap-2">
-                    <Button
+                    <button
                         className="flex justify-center gap-2 border border-slate-containerColor bg-google p-button rounded-button"
                         onClick={() => handleSocialLogin("google")}
                         disabled={isLoading} // 로그인 시도 중이면 버튼 비활성화
                     >
                         <Image src="/google-logo.png" alt="google" width={24} height={24} />
                         구글 로그인
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                         className="flex justify-center gap-2 bg-kakao p-button rounded-button"
                         onClick={() => handleSocialLogin("kakao")}
                         disabled={isLoading} // 로그인 시도 중이면 버튼 비활성화
                     >
                         <Image src="/kakao-logo.png" alt="kakao" width={24} height={24} />
                         카카오 로그인
-                    </Button>
+                    </button>
                 </div>
             </div>
         </div>

@@ -17,16 +17,19 @@ export default function ProfileDetailPage() {
             { name: "TailwindCSS", color: "bg-teal-400 text-white" },
             { name: "Zustand", color: "bg-purple-600 text-white" },
             { name: "Express.js", color: "bg-gray-900 text-white" },
-            { name: "Supabase", color: "bg-green-500 text-white" },
+            { name: "Vercel", color: "bg-black text-white" },
         ],
         education: [
-            { school: "청석고등학교", period: "2018 ~ 2020 졸업" },
+            { school: "청석고등학교", period: "2018 ~ 2021 졸업" },
             { school: "청주대학교", period: "2021. 3 ~ 현재 재학 중" },
+        ],
+        career: [
+            { company: "학부 연구실", period: "2024. 11 ~ 현재" },
         ],
     });
 
     return (
-        <div className="w-full h-full flex flex-col gap-4 bg-background p-container">
+        <div className="w-full h-full flex flex-col gap-6 bg-background p-container">
             <div className="flex flex-col items-center justify-center p-8">
                 <div className="w-40 h-40 rounded-full overflow-hidden">
                     <Image
@@ -50,6 +53,7 @@ export default function ProfileDetailPage() {
                 </div>
             </div>
 
+            {/* 기술 스택 */}
             <div className="p-container border border-containerColor rounded-container">
                 <h2 className="text-xl font-semibold mb-4">기술 스택</h2>
                 <div className="flex flex-wrap gap-2">
@@ -61,6 +65,7 @@ export default function ProfileDetailPage() {
                 </div>
             </div>
 
+            {/* 깃허브 컨트리뷰션 */}
             <div className="p-container border border-containerColor rounded-container">
                 <h2 className="text-xl font-semibold mb-4">깃허브</h2>
                 <h3>컨트리뷰션</h3>
@@ -71,16 +76,40 @@ export default function ProfileDetailPage() {
                 </div>
             </div>
 
+            {/* 학력 */}
             <div className="p-container border border-containerColor rounded-container">
                 <h2 className="text-xl font-semibold mb-4">학력</h2>
-                <ul>
+                <div className="space-y-4">
                     {profile.education.map((edu, index) => (
-                        <li key={index} className="mb-2">
-                            <p className="font-bold">{edu.school}</p>
-                            <p className="text-sm text-gray-600">{edu.period}</p>
-                        </li>
+                        <div key={index} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-white text-sm font-bold">
+                                {index + 1}
+                            </span>
+                            <div>
+                                <p className="text-lg font-semibold">{edu.school}</p>
+                                <p className="text-sm text-gray-600">{edu.period}</p>
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
+            </div>
+
+            {/* 커리어 */}
+            <div className="p-container border border-containerColor rounded-container">
+                <h2 className="text-xl font-semibold mb-4">활동</h2>
+                <div className="space-y-4">
+                    {profile.career.map((job, index) => (
+                        <div key={index} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-white text-sm font-bold">
+                                {index + 1}
+                            </span>
+                            <div>
+                                <p className="text-lg font-semibold">{job.company}</p>
+                                <p className="text-sm text-gray-600">{job.period}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
