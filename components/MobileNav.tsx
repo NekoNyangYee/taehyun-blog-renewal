@@ -1,7 +1,7 @@
 "use client";
 
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon, LogInIcon } from "lucide-react";
+import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon, LogInIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,7 +10,7 @@ import { supabase } from "@components/lib/supabaseClient";
 import { useSessionStore } from "@components/store/sessionStore";
 import Image from "next/image";
 
-export default function MobileNavBar({ onClose }: { onClose: () => void }) {
+export default function MobileNavBar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const currentPath: string = usePathname();
     const { fetchCategories } = useCategoriesStore();
     const { session, addSession } = useSessionStore();
@@ -22,13 +22,13 @@ export default function MobileNavBar({ onClose }: { onClose: () => void }) {
 
     useEffect(() => {
         const fetchProfile = async () => {
-            if (!session?.user?.id) return; // session이 없을 경우 실행하지 않음
+            if (!session?.user?.id) return;
 
             const { data, error } = await supabase
                 .from("profiles")
                 .select("nickname")
                 .eq("id", session.user.id)
-                .single(); // 첫 번째 데이터만 가져오도록 개선
+                .single();
 
             if (error) {
                 console.error("프로필 가져오기 에러:", error);
@@ -41,7 +41,7 @@ export default function MobileNavBar({ onClose }: { onClose: () => void }) {
         };
 
         fetchProfile();
-    }, [session]); // session이 변경될 때만 실행
+    }, [session]);
 
     const handleLogout = async () => {
         alert("로그아웃 되었습니다.");
@@ -56,21 +56,43 @@ export default function MobileNavBar({ onClose }: { onClose: () => void }) {
 
     return (
         <>
+            {/* 오버레이 */}
+            {isOpen && (
+                <div
+                    className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-10"
+                    onClick={onClose}
+                ></div>
+            )}
+
+            {/* 네비게이션 바 */}
             <aside
-                className="fixed top-0 left-0 pt-[65px] w-full h-full bg-white flex flex-col justify-between items-center gap-2 z-10 transition-transform transform"
+                className={`fixed top-0 left-0 pt-[65px] w-[70%] max-w-[300px] h-full bg-white flex flex-col justify-between items-center gap-2 z-20 shadow-lg transition-transform ${isOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
             >
                 <div className="p-container w-full flex flex-col">
-                    <Link href={"/"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/")}`} onClick={onClose}>
+                    <Link
+                        href={"/"}
+                        className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/")}`}
+                        onClick={onClose}
+                    >
                         <HomeIcon size={18} />
                         <span className="truncate">홈</span>
                     </Link>
-                    <Link href="/posts" className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/posts")}`} onClick={onClose}>
+                    <Link
+                        href="/posts"
+                        className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/posts")}`}
+                        onClick={onClose}
+                    >
                         <Grid2X2Icon size={18} />
                         <span className="truncate">게시물</span>
                     </Link>
-                    <Link href={"/settings"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/settings")}`} onClick={onClose}>
-                        <SettingsIcon size={18} />
-                        <span className="truncate">설정</span>
+                    <Link
+                        href={"/profile"}
+                        className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/profile")}`}
+                        onClick={onClose}
+                    >
+                        <InfoIcon size={18} />
+                        <span className="truncate">프로필</span>
                     </Link>
                 </div>
                 <div className="flex flex-col gap-2 w-full p-container border-t border-containerColor items-center">
@@ -91,13 +113,20 @@ export default function MobileNavBar({ onClose }: { onClose: () => void }) {
                                     <span className="text-sm text-gray-600">{session.user?.email}</span>
                                 </div>
                             </div>
-                            <Button onClick={handleLogout} className="w-full h-10 p-button border border-logoutColor bg-logoutButton text-logoutText flex items-center gap-2">
+                            <Button
+                                onClick={handleLogout}
+                                className="w-full h-10 p-button border border-logoutColor bg-logoutButton text-logoutText flex items-center gap-2"
+                            >
                                 <LogOutIcon size={18} />
                                 로그아웃
                             </Button>
                         </>
                     ) : (
-                        <Link href="/login" className="w-full h-10 p-button border border-editButton rounded-button bg-editButton text-loginText flex items-center justify-center gap-2" onClick={onClose}>
+                        <Link
+                            href="/login"
+                            className="w-full h-10 p-button border border-editButton rounded-button bg-editButton text-loginText flex items-center justify-center gap-2"
+                            onClick={onClose}
+                        >
                             <LogInIcon size={18} />
                             로그인
                         </Link>
