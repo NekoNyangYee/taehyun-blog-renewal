@@ -38,36 +38,54 @@ export default function PostDetailPage() {
         const fetchPost = async () => {
             setLoading(true);
             const postId = pathname.split("/").pop();
+
+            // 게시물이 없으면 먼저 불러오기
             if (posts.length === 0) {
-                fetchPosts();
-            } else {
+                await fetchPosts(); // fetchPosts()가 끝날 때까지 기다림
+            }
 
-                const selectedPost = posts.find((p) => String(p.id) === postId);
-                setPost(selectedPost || null);
+            // 최신 상태의 posts를 가져옴
+            const updatedPosts = usePostStore.getState().posts;
+            const selectedPost = updatedPosts.find((p) => String(p.id) === postId);
 
-                if (selectedPost && !hasIncremented) {
-                    const { incrementViewCount } = usePostStore.getState();
-                    if (incrementViewCount) {
-                        incrementViewCount(selectedPost.id);
-                        setHasIncremented(true);
+            if (!selectedPost) {
+                setPost(null);
+                setLoading(false);
+                return;
+            }
 
+            setPost(selectedPost);
+
+            // 조회수 증가 로직 (한 번만 실행되도록 방지)
+            if (!hasIncremented) {
+                const { incrementViewCount } = usePostStore.getState();
+                if (incrementViewCount) {
+                    await incrementViewCount(selectedPost.id);
+                    setHasIncremented(true);
+
+                    // 조회수 증가 후, 500ms 대기 후 최신 데이터를 다시 불러옴
+                    setTimeout(async () => {
                         const { data: updatedPost, error: fetchUpdatedError } = await supabase
                             .from("posts")
                             .select("*")
                             .eq("id", selectedPost.id)
                             .single();
 
-                        if (!fetchUpdatedError) {
+                        if (!fetchUpdatedError && updatedPost) {
                             setPost(updatedPost);
                         }
-                    }
+
+                        setLoading(false);
+                    }, 500);
                 }
+            } else {
                 setLoading(false);
             }
         };
 
         fetchPost();
-    }, [posts, pathname, hasIncremented]);
+    }, [pathname]); // hasIncremented 제거하여 의도치 않은 반복 실행 방지
+
 
     useEffect(() => {
         if (post?.contents) {
