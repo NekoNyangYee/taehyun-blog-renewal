@@ -8,6 +8,8 @@ import categoryImages from "@components/lib/util/postThumbnail";
 import { formatDate } from "@components/lib/util/dayjs";
 import Link from "next/link";
 import { ArrowLeftCircle, ArrowRightCircle, CalendarRangeIcon, EyeIcon, TagIcon } from "lucide-react";
+import PageLoading from "@components/components/loading/PageLoading";
+import { supabase } from "@components/lib/supabaseClient";
 
 interface Heading {
     id: string;
@@ -30,21 +32,42 @@ export default function PostDetailPage() {
     const [headings, setHeadings] = useState<{ id: string; text: string; tag: string }[]>([]);
     const [updatedContent, setUpdatedContent] = useState<string>("");
     const [hasIncremented, setHasIncremented] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        if (posts.length === 0) {
-            fetchPosts();
-        } else {
+        const fetchPost = async () => {
+            setLoading(true);
             const postId = pathname.split("/").pop();
-            const selectedPost = posts.find((p) => String(p.id) === postId);
-            setPost(selectedPost || null);
+            if (posts.length === 0) {
+                fetchPosts();
+            } else {
 
-            if (selectedPost && !hasIncremented) {
-                incrementViewCount(selectedPost.id);
-                setHasIncremented(true);
+                const selectedPost = posts.find((p) => String(p.id) === postId);
+                setPost(selectedPost || null);
+
+                if (selectedPost && !hasIncremented) {
+                    const { incrementViewCount } = usePostStore.getState();
+                    if (incrementViewCount) {
+                        incrementViewCount(selectedPost.id);
+                        setHasIncremented(true);
+
+                        const { data: updatedPost, error: fetchUpdatedError } = await supabase
+                            .from("posts")
+                            .select("*")
+                            .eq("id", selectedPost.id)
+                            .single();
+
+                        if (!fetchUpdatedError) {
+                            setPost(updatedPost);
+                        }
+                    }
+                }
+                setLoading(false);
             }
-        }
-    }, [posts, pathname]);
+        };
+
+        fetchPost();
+    }, [posts, pathname, hasIncremented]);
 
     useEffect(() => {
         if (post?.contents) {
@@ -119,7 +142,7 @@ export default function PostDetailPage() {
     const imageUrl = categoryImages[category?.name || "/default.png"];
 
     if (!post) {
-        return <div className="flex justify-center items-center h-screen text-lg font-semibold">로딩 중...</div>;
+        return <PageLoading />;
     }
 
     // 목차를 구조적으로 정리 (h2 → h3 그룹핑)
@@ -144,6 +167,8 @@ export default function PostDetailPage() {
 
     const previousPage = currentPageIndex > 0 ? posts[currentPageIndex - 1] : null;
     const nextPage = currentPageIndex < posts.length - 1 ? posts[currentPageIndex + 1] : null;
+
+    if (loading) return <PageLoading />;
 
     return (
         <div className="h-full w-full max-w-[1200px] mx-auto p-4">

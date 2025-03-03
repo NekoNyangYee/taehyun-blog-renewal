@@ -42,31 +42,39 @@ export default function ProfileDetailPage() {
 
     return (
         <div className="w-full h-full flex flex-col gap-6 bg-background p-container">
-            {/* 프로필 정보 */}
-            <div className="flex flex-col items-center justify-center p-8">
-                <div className="w-40 h-40 rounded-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-center justify-between p-8 gap-6">
+                <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-gray-300 shadow-md">
                     <Image
                         src="/profile.jpg"
                         alt="Profile Picture"
                         width={160}
                         height={160}
-                        className="object-cover"
+                        className="object-cover w-full h-full"
                     />
                 </div>
-                <h1 className="mt-4 text-2xl font-bold">{profile.name}</h1>
-                <p className="text-sm text-gray-600">{profile.username}</p>
-                <p className="mt-2 text-base text-center">{profile.description}</p>
-                <div className="mt-4 flex gap-4">
-                    <a href={`mailto:${profile.email}`} className="text-blue-500 underline">
-                        {profile.email}
-                    </a>
-                    <a href={profile.github} className="text-blue-500 underline" target="_blank" rel="noopener noreferrer">
-                        GitHub
-                    </a>
+                <div className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1 space-y-3">
+                    <h1 className="text-2xl font-bold">{profile.name}</h1>
+                    <p className="text-sm text-gray-500">@{profile.username}</p>
+                    <p className="text-base text-gray-700">{profile.description}</p>
+
+                    <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-2">
+                        <a
+                            href={`mailto:${profile.email}`}
+                            className="p-button border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition"
+                        >
+                            {profile.email}
+                        </a>
+                        <a
+                            href={profile.github}
+                            className="p-button border border-gray-700 text-gray-700 rounded-md hover:bg-gray-700 hover:text-white transition"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            GitHub
+                        </a>
+                    </div>
                 </div>
             </div>
-
-            {/* 기술 스택 */}
             <div className="p-container border border-containerColor rounded-container">
                 <h2 className="text-xl font-semibold mb-4">기술 스택</h2>
                 <div className="flex flex-wrap gap-2">
@@ -77,7 +85,6 @@ export default function ProfileDetailPage() {
                     ))}
                 </div>
             </div>
-            {/* 깃허브 컨트리뷰션 */}
             <div className="p-container border border-containerColor rounded-container flex flex-col gap-2">
                 <h2 className="text-xl font-semibold">깃허브 컨트리뷰션</h2>
                 <div className="w-full flex flex-col items-center">
@@ -100,7 +107,6 @@ export default function ProfileDetailPage() {
                     </div>
                 </div>
             </div>
-
             <div className="p-container border border-containerColor rounded-container">
                 <h2 className="text-xl font-semibold mb-4">학력</h2>
                 <div className="space-y-4">
@@ -117,8 +123,6 @@ export default function ProfileDetailPage() {
                     ))}
                 </div>
             </div>
-
-            {/* 커리어 */}
             <div className="p-container border border-containerColor rounded-container">
                 <h2 className="text-xl font-semibold mb-4">활동</h2>
                 <div className="space-y-4">

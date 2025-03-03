@@ -1,14 +1,16 @@
 "use client";
 
+import PageLoading from "@components/components/loading/PageLoading";
 import { addUserToProfileTable } from "@components/lib/loginUtils";
 import { supabase } from "@components/lib/supabaseClient";
 import { usePostStore } from "@components/store/postStore";
 import { EyeIcon } from "lucide-react";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function MainHome() {
     const { posts, fetchPosts } = usePostStore();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const addUser = async () => {
@@ -31,7 +33,7 @@ export default function MainHome() {
             }
         }
 
-        fetchPosts();
+        fetchPosts().finally(() => setLoading(false));
         addUser();
     }, []);
 
