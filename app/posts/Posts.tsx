@@ -75,7 +75,7 @@ export default function PostsPage() {
     }, [filteredPosts, sortOrder]); // 🔥 posts와 정렬 기준이 바뀔 때만 재계산
 
     return (
-        <div className="p-container w-full min-h-screen flex flex-col flex-1 gap-2">
+        <div className="p-container w-full flex flex-col flex-1 gap-2">
             <h2 className="text-2xl font-bold">게시물</h2>
             <div className="flex justify-between items-center gap-4">
                 <CategoryButtons selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />

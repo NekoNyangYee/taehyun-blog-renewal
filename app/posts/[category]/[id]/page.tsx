@@ -23,7 +23,7 @@ interface HeadingGroup {
 };
 
 export default function PostDetailPage() {
-    const { posts, fetchPosts, incrementViewCount } = usePostStore();
+    const { posts, fetchPosts } = usePostStore();
     const { myCategories } = useCategoriesStore();
     const pathname = usePathname();
     const router = useRouter();
