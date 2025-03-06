@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className="flex flex-col h-screen">
         <Header />
-        <div className="flex flex-1 max-w-[90rem] mx-auto w-full pt-[65px]">
+        <div className="flex flex-1 max-w-[90rem] box-border mx-auto w-full pt-[65px]">
           <NavBar />
           <Suspense fallback={<PageLoading />}>
             {children}

@@ -9,7 +9,6 @@ interface UserData {
     profile_image?: string;
     created_at?: string;
     profile: string;
-    provider?: "google" | "kakao";
 };
 
 export const addUserToProfileTable = async <T extends UserData>(userSessionData: T) => {
