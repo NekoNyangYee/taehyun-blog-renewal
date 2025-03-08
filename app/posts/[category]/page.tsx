@@ -6,16 +6,19 @@ import { usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import CategoryButtons from "@components/components/CategoryButtons";
 import dayjs, { formatDate } from "@components/lib/util/dayjs";
-import { EyeIcon, HeartIcon, MessageSquareTextIcon } from "lucide-react";
+import { BookmarkIcon, EyeIcon, HeartIcon, MessageSquareTextIcon } from "lucide-react";
 import { useCommentStore } from "@components/store/commentStore";
 import categoryImages from "@components/lib/util/postThumbnail";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/components/ui/select";
 import { cn } from "@components/lib/utils";
+import { useSessionStore } from "@components/store/sessionStore";
 
 export default function CategoryPage({ params }: { params: { category: string } }) {
     const pathname = usePathname();
-    const { posts, fetchPosts } = usePostStore();
+    const { session } = useSessionStore();
+    const userId = session?.user?.id;
+    const { posts, bookmarks, fetchPosts, fetchBookmarkPosts, addBookmark, removeBookmark } = usePostStore();
     const { myCategories, fetchCategories } = useCategoriesStore();
     const { comments, fetchComments } = useCommentStore();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(decodeURIComponent(params.category));
@@ -82,6 +85,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
                             const category = myCategories.find((cat) => cat.id === post.category_id);
                             const imageUrl = categoryImages[category?.name || "/default.png"];
                             const currentCategoryName = myCategories.find((cat) => cat.id === post.category_id)?.name;
+                            const isBookmarked = bookmarks.includes(post.id);
 
                             return (
                                 <Link key={post.id} href={`/posts/${currentCategoryName}/${post.id}`}>
@@ -108,6 +112,24 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                     <div className="flex gap-2 items-center text-metricsText">
                                                         <MessageSquareTextIcon size={14} />
                                                         {comments.filter((comment) => comment.post_id === post.id).length}
+                                                    </div>
+                                                    <div className="flex gap-2 items-center text-metricsText">
+                                                        {session && (
+                                                            <div className="flex gap-2 items-center text-metricsText">
+                                                                <BookmarkIcon
+                                                                    size={14}
+                                                                    className={cn(isBookmarked ? "fill-yellow-500" : "fill-gray-500")}
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        if (!userId) {
+                                                                            alert("로그인이 필요합니다.");
+                                                                            return;
+                                                                        }
+                                                                        isBookmarked ? removeBookmark(userId, post.id) : addBookmark(userId, post.id);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

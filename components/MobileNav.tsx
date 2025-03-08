@@ -1,7 +1,7 @@
 "use client";
 
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon, LogInIcon, InfoIcon, HandIcon } from "lucide-react";
+import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon, LogInIcon, InfoIcon, HandIcon, StarIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -86,6 +86,12 @@ export default function MobileNavBar({ isOpen, onClose }: { isOpen: boolean; onC
                         <Grid2X2Icon size={18} />
                         <span className="truncate">게시물</span>
                     </Link>
+                    {session && (
+                        <Link href={"/bookmarks"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/bookmarks")}`}>
+                            <StarIcon size={18} />
+                            <span className="truncate">북마크</span>
+                        </Link>
+                    )}
                     <Link
                         href={"/profile"}
                         className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/profile")}`}

@@ -1,28 +1,30 @@
 "use client";
 
-import { useCategoriesStore } from "@components/store/categoriesStore";
-import { Grid2X2Icon, HomeIcon, LogOutIcon, SettingsIcon, LogInIcon, InfoIcon, HandIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { useCategoriesStore } from "@components/store/categoriesStore";
+import { useSessionStore } from "@components/store/sessionStore";
+import { Grid2X2Icon, HomeIcon, LogOutIcon, LogInIcon, HandIcon, StarIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { supabase } from "@components/lib/supabaseClient";
-import { useSessionStore } from "@components/store/sessionStore";
 
 export default function NavBar() {
     const currentPath: string = usePathname();
     const { myCategories, fetchCategories } = useCategoriesStore();
-    const { session, addSession } = useSessionStore();
+    const { session, isLoading, fetchSession, addSession } = useSessionStore();
+    const router = useRouter();
 
     useEffect(() => {
         fetchCategories();
+        fetchSession(); // ✅ 세션 동기화
     }, []);
 
     const handleLogout = async () => {
         alert("로그아웃 되었습니다.");
         await supabase.auth.signOut();
         addSession(null);
-        console.log("Session after logout:", session);
+        router.push("/");
     };
 
     const isActive = (path: string) =>
@@ -32,7 +34,7 @@ export default function NavBar() {
 
     return (
         <>
-            {currentPath !== "/login" && (
+            {currentPath !== "/login" && !isLoading && ( // ✅ 로딩이 끝날 때까지 UI 유지
                 <aside
                     className="sticky left-0 top-[65px] h-[calc(100vh-65px)] bg-white flex flex-col justify-between gap-2 z-0 max-2xl:hidden"
                 >
@@ -45,6 +47,12 @@ export default function NavBar() {
                             <Grid2X2Icon size={18} />
                             <span className="truncate">게시물</span>
                         </Link>
+                        {session && ( // ✅ 세션 확인 후 북마크 탭 표시
+                            <Link href={"/bookmarks"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/bookmarks")}`}>
+                                <StarIcon size={18} />
+                                <span className="truncate">북마크</span>
+                            </Link>
+                        )}
                         <Link href={"/profile"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/profile")}`}>
                             <HandIcon size={18} />
                             <span className="truncate">안녕하세요!</span>

@@ -10,7 +10,7 @@ import { MenuIcon, XIcon } from "lucide-react";
 import MobileNavBar from "./MobileNav";
 
 export default function Header() {
-    const { addSession } = useSessionStore();
+    const { session, addSession } = useSessionStore();
     const [isMobileNavVisible, setMobileNavVisible] = useState(false);
 
     const toggleMobileNav = () => {
@@ -56,6 +56,17 @@ export default function Header() {
                         </Link>
                     </div>
                     <div className="flex items-center gap-4">
+                        <p>{ }</p>
+                        {session && (
+                            <div className="object-cover w-8 h-8 rounded-full overflow-hidden">
+                                <Image
+                                    src={session.user?.user_metadata.avatar_url || ""}
+                                    alt="profile"
+                                    width={32}
+                                    height={32}
+                                />
+                            </div>
+                        )}
                         <button onClick={toggleMobileNav} className="2xl:hidden">
                             {isMobileNavVisible ? <XIcon size={24} /> : <MenuIcon size={24} />}
                         </button>
