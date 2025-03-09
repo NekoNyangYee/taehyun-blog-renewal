@@ -46,9 +46,10 @@ export const usePostStore = create<PostsProps>((set) => ({
         }
     },
 
-    // 북마크된 게시물만 가져오기 (is_bookmark = true)
     fetchBookmarkPosts: async (userId) => {
         if (!userId) return;
+
+        console.log("Fetching bookmarks for user:", userId);
 
         const { data, error } = await supabase
             .from("bookmarks")
@@ -60,7 +61,11 @@ export const usePostStore = create<PostsProps>((set) => ({
             return;
         }
 
-        set({ bookmarks: data.map((b) => b.post_id) });
+        console.log("Fetched bookmark IDs:", data); // ✅ 북마크된 post_id 확인
+
+        if (data) {
+            set({ bookmarks: data.map((b) => b.post_id) });
+        }
     },
 
     incrementViewCount: async (postId) => {

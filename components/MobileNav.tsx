@@ -87,7 +87,7 @@ export default function MobileNavBar({ isOpen, onClose }: { isOpen: boolean; onC
                         <span className="truncate">게시물</span>
                     </Link>
                     {session && (
-                        <Link href={"/bookmarks"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/bookmarks")}`}>
+                        <Link href={"/bookmarks"} className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive("/bookmarks")}`} onClick={onClose}>
                             <StarIcon size={18} />
                             <span className="truncate">북마크</span>
                         </Link>
