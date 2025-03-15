@@ -115,8 +115,9 @@ export default function PostsPage() {
                             return (
                                 <Link key={post.id} href={`/posts/${currentCategoryName}/${post.id}`}>
                                     <div key={post.id} className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col">
-                                        <div className="flex items-center justify-center object-cover w-auto lg:h-44 md:h-48 bg-gray-800">
+                                        <div className="relative w-auto lg:h-44 md:h-48">
                                             <img src={imageUrl} alt="Post Thumbnail" className="h-full w-full object-cover" />
+                                            <div className="absolute inset-x-0 bottom-0 h-1/ bg-gradient-to-t from-white to-transparent"></div>
                                         </div>
                                         <div className="flex flex-col gap-2 p-container">
                                             <div className="flex flex-col gap-2">
@@ -138,23 +139,24 @@ export default function PostsPage() {
                                                         <MessageSquareTextIcon size={14} />
                                                         {comments.filter((comment) => comment.post_id === post.id).length}
                                                     </div>
-                                                    {session && (
-                                                        <div className="flex gap-2 items-center text-metricsText">
-                                                            <BookmarkIcon
-                                                                size={14}
-                                                                className={cn(isBookmarked ? "fill-yellow-500" : "fill-gray-500")}
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    if (!userId) {
-                                                                        alert("로그인이 필요합니다.");
-                                                                        return;
-                                                                    }
-                                                                    isBookmarked ? removeBookmark(userId, post.id) : addBookmark(userId, post.id);
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    )}
+
                                                 </div>
+                                                {session && (
+                                                    <div className="flex gap-2 items-center text-metricsText">
+                                                        <BookmarkIcon
+                                                            size={18}
+                                                            className={cn(isBookmarked ? "fill-yellow-500 stroke-none" : "fill-none")}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                if (!userId) {
+                                                                    alert("로그인이 필요합니다.");
+                                                                    return;
+                                                                }
+                                                                isBookmarked ? removeBookmark(userId, post.id) : addBookmark(userId, post.id);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

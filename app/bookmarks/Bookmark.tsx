@@ -35,7 +35,7 @@ export default function BookMarkDetailPage() {
     const bookmarkedPosts = posts.filter((post) => bookmarks.includes(post.id));
 
     return (
-        <div className="p-container w-full h-full flex flex-col">
+        <div className="p-container w-full h-full flex flex-col gap-4">
             <h2 className="text-2xl font-bold">북마크</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
                 {bookmarkedPosts.length > 0 ? (
@@ -79,7 +79,7 @@ export default function BookMarkDetailPage() {
                                             {/* ✅ 북마크 버튼 */}
                                             {session && (
                                                 <button
-                                                    className="text-gray-500 hover:text-yellow-500"
+                                                    className="text-yellow-500 hover:text-yellow-500"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         if (!userId) {

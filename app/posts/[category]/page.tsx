@@ -113,25 +113,23 @@ export default function CategoryPage({ params }: { params: { category: string } 
                                                         <MessageSquareTextIcon size={14} />
                                                         {comments.filter((comment) => comment.post_id === post.id).length}
                                                     </div>
-                                                    <div className="flex gap-2 items-center text-metricsText">
-                                                        {session && (
-                                                            <div className="flex gap-2 items-center text-metricsText">
-                                                                <BookmarkIcon
-                                                                    size={14}
-                                                                    className={cn(isBookmarked ? "fill-yellow-500" : "fill-gray-500")}
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        if (!userId) {
-                                                                            alert("로그인이 필요합니다.");
-                                                                            return;
-                                                                        }
-                                                                        isBookmarked ? removeBookmark(userId, post.id) : addBookmark(userId, post.id);
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </div>
                                                 </div>
+                                                {session && (
+                                                    <div className="flex gap-2 items-center text-metricsText">
+                                                        <BookmarkIcon
+                                                            size={18}
+                                                            className={cn(isBookmarked ? "fill-yellow-500 stroke-none" : "fill-none")}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                if (!userId) {
+                                                                    alert("로그인이 필요합니다.");
+                                                                    return;
+                                                                }
+                                                                isBookmarked ? removeBookmark(userId, post.id) : addBookmark(userId, post.id);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
