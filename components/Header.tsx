@@ -8,6 +8,7 @@ import Image from "next/image";
 import LogoIcon from "./icons/LogoIcon";
 import { MenuIcon, XIcon } from "lucide-react";
 import MobileNavBar from "./MobileNav";
+import ScrollProgressBar from "./ScrollProgressBar";
 
 export default function Header() {
     const { session, addSession } = useSessionStore();
@@ -76,6 +77,7 @@ export default function Header() {
                 </div>
             </div>
             <MobileNavBar isOpen={isMobileNavVisible} onClose={toggleMobileNav} />
+            <ScrollProgressBar />
         </>
     );
 }
