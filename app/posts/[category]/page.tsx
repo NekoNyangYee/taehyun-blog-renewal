@@ -33,24 +33,22 @@ export default function CategoryPage({
   const pathname = usePathname();
   const { session } = useSessionStore();
   const userId = session?.user?.id;
-  const {
-    posts,
-    bookmarks,
-    fetchPosts,
-    fetchBookmarkPosts,
-    addBookmark,
-    removeBookmark,
-  } = usePostStore();
+  const { posts, bookmarks, fetchPosts, addBookmark, removeBookmark } =
+    usePostStore();
   const { myCategories, fetchCategories } = useCategoriesStore();
   const { comments, fetchComments } = useCommentStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     decodeURIComponent(params.category)
   );
   const [sortOrder, setSortOrder] = useState<string>("new-sort");
+  const [isPending, setIsPending] = useState(true);
 
   useEffect(() => {
+    setIsPending(true);
     if (posts.length === 0) {
-      fetchPosts();
+      fetchPosts().finally(() => {
+        setIsPending(false);
+      });
     }
     fetchCategories();
   }, []);
@@ -111,103 +109,112 @@ export default function CategoryPage({
             <SelectItem value="min-view-sort">조회수 낮은순</SelectItem>
           </SelectContent>
         </Select>
-      </div>{" "}
-      {filteredPosts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
-          {sortedPosts.length > 0 ? (
-            sortedPosts.map((post) => {
-              const category = myCategories.find(
-                (cat) => cat.id === post.category_id
-              );
-              const imageUrl = categoryImages[category?.name || "/default.png"];
-              const currentCategoryName = myCategories.find(
-                (cat) => cat.id === post.category_id
-              )?.name;
-              const isBookmarked = bookmarks.includes(post.id);
-
-              return (
-                <Link
-                  key={post.id}
-                  href={`/posts/${currentCategoryName}/${post.id}`}
-                >
-                  <div
-                    key={post.id}
-                    className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col"
-                  >
-                    <div className="flex items-center justify-center object-cover w-auto lg:h-44 md:h-48 bg-gray-800">
-                      <img
-                        src={imageUrl}
-                        alt="Post Thumbnail"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2 p-container">
-                      <div className="flex flex-col gap-2">
-                        <h2 className="text-lg font-bold truncate">
-                          {post.title}
-                        </h2>
-                        <p className="text-sm text-metricsText">
-                          by {post.author_name}
-                        </p>
-                        <p className="text-sm text-metricsText">
-                          {formatDate(post.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex justify-between pt-container">
-                        <div className="flex gap-4 text-[14px]">
-                          <div className="flex gap-2 items-center text-metricsText">
-                            <EyeIcon size={14} />
-                            {post.view_count}
-                          </div>
-                          <div className="flex gap-2 items-center text-metricsText">
-                            <HeartIcon size={14} />
-                            {post.like_count}
-                          </div>
-                          <div className="flex gap-2 items-center text-metricsText">
-                            <MessageSquareTextIcon size={14} />
-                            {
-                              comments.filter(
-                                (comment) => comment.post_id === post.id
-                              ).length
-                            }
-                          </div>
-                        </div>
-                        {session && (
-                          <div className="flex gap-2 items-center text-metricsText">
-                            <BookmarkIcon
-                              size={18}
-                              className={cn(
-                                isBookmarked
-                                  ? "fill-yellow-500 stroke-none"
-                                  : "fill-none"
-                              )}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (!userId) {
-                                  alert("로그인이 필요합니다.");
-                                  return;
-                                }
-                                isBookmarked
-                                  ? removeBookmark(userId, post.id)
-                                  : addBookmark(userId, post.id);
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <p className="text-gray-500 col-span-full text-center mt-6">
-              해당 카테고리에 게시물이 없습니다.
-            </p>
-          )}
+      </div>
+      {isPending ? (
+        <div className="w-full h-[386px] flex items-center justify-center border border-containerColor rounded-container">
+          <p className="text-gray-500 text-center">로딩 중...</p>
         </div>
       ) : (
-        <p className="text-gray-500 text-center mt-4">로딩 중...</p>
+        <>
+          {filteredPosts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
+              {sortedPosts.length > 0
+                ? sortedPosts.map((post) => {
+                    const category = myCategories.find(
+                      (cat) => cat.id === post.category_id
+                    );
+                    const imageUrl =
+                      categoryImages[category?.name || "/default.png"];
+                    const currentCategoryName = myCategories.find(
+                      (cat) => cat.id === post.category_id
+                    )?.name;
+                    const isBookmarked = bookmarks.includes(post.id);
+
+                    return (
+                      <Link
+                        key={post.id}
+                        href={`/posts/${currentCategoryName}/${post.id}`}
+                      >
+                        <div
+                          key={post.id}
+                          className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col"
+                        >
+                          <div className="flex items-center justify-center object-cover w-auto lg:h-44 md:h-48 bg-gray-800">
+                            <img
+                              src={imageUrl}
+                              alt="Post Thumbnail"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-2 p-container">
+                            <div className="flex flex-col gap-2">
+                              <h2 className="text-lg font-bold truncate">
+                                {post.title}
+                              </h2>
+                              <p className="text-sm text-metricsText">
+                                by {post.author_name}
+                              </p>
+                              <p className="text-sm text-metricsText">
+                                {formatDate(post.created_at)}
+                              </p>
+                            </div>
+                            <div className="flex justify-between pt-container">
+                              <div className="flex gap-4 text-[14px]">
+                                <div className="flex gap-2 items-center text-metricsText">
+                                  <EyeIcon size={14} />
+                                  {post.view_count}
+                                </div>
+                                <div className="flex gap-2 items-center text-metricsText">
+                                  <HeartIcon size={14} />
+                                  {post.like_count}
+                                </div>
+                                <div className="flex gap-2 items-center text-metricsText">
+                                  <MessageSquareTextIcon size={14} />
+                                  {
+                                    comments.filter(
+                                      (comment) => comment.post_id === post.id
+                                    ).length
+                                  }
+                                </div>
+                              </div>
+                              {session && (
+                                <div className="flex gap-2 items-center text-metricsText">
+                                  <BookmarkIcon
+                                    size={18}
+                                    className={cn(
+                                      isBookmarked
+                                        ? "fill-yellow-500 stroke-none"
+                                        : "fill-none"
+                                    )}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!userId) {
+                                        alert("로그인이 필요합니다.");
+                                        return;
+                                      }
+                                      isBookmarked
+                                        ? removeBookmark(userId, post.id)
+                                        : addBookmark(userId, post.id);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })
+                : null}
+            </div>
+          ) : (
+            <div className="w-full h-[386px] flex items-center justify-center border border-containerColor rounded-container">
+              <p className="text-gray-500 text-center">
+                해당 카테고리에 게시물이 없습니다.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

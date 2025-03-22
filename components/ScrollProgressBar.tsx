@@ -14,13 +14,14 @@ export default function ScrollProgressBar() {
 
       const totalHeight = scrollHeight - clientHeight;
       const scrolledHeight = window.scrollY;
-      const progress = (scrolledHeight / totalHeight) * 100; // Calculate progress as a percentage
+      const progress =
+        totalHeight > 0 ? (scrolledHeight / totalHeight) * 100 : 0;
 
       setScrollProgress(progress);
     };
 
-    handleClientScrollBar();
-
+    // 초기 상태를 0으로 설정
+    setScrollProgress(0);
     window.addEventListener("scroll", handleClientScrollBar);
 
     return () => window.removeEventListener("scroll", handleClientScrollBar);
@@ -29,7 +30,7 @@ export default function ScrollProgressBar() {
   const shouldShowProgressBar = /^\/posts\/[^\/]+\/\d+$/.test(currentPath);
 
   return shouldShowProgressBar ? (
-    <div className="fixed top-0 left-0 w-full h-1 z-50">
+    <div className="fixed top-0 left-0 w-full h-1 z-20">
       <div
         className="h-1 bg-black"
         style={{ width: `${scrollProgress}%` } as CSSProperties}

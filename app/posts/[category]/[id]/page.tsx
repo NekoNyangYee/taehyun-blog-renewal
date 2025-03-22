@@ -143,6 +143,12 @@ export default function PostDetailPage() {
     }
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    if (post && session?.user?.id) {
+      setIsHeartClicked(post.liked_by_user?.includes(session.user.id) ?? false);
+    }
+  }, [post, session?.user?.id]);
+
   /** 본문에서 h2, h3 태그에 고유 id 추가 */
   const extractHeadings = (htmlContent: string) => {
     const parser = new DOMParser();
@@ -369,6 +375,10 @@ export default function PostDetailPage() {
     fetchComments(String(post?.id));
   };
 
+  const toggleReply = (commentId: number) => {
+    setReplyingTo((prev) => (prev === commentId ? null : commentId));
+  };
+
   if (loading) return <PageLoading />;
 
   return (
@@ -506,7 +516,9 @@ export default function PostDetailPage() {
         </div>
         <Textarea
           className="w-full min-h-40 resize-none p-container border rounded"
-          placeholder="댓글을 입력하세요"
+          placeholder={
+            session ? "댓글을 입력하세요." : "로그인을 한 후 이용 가능합니다."
+          }
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
@@ -533,7 +545,11 @@ export default function PostDetailPage() {
               </Button>
             </>
           ) : (
-            <p>로그인</p>
+            <Link href="/login">
+              <Button className="bg-navButton text-white rounded-button">
+                로그인 하러 가기
+              </Button>
+            </Link>
           )}
         </div>
       </div>
@@ -594,26 +610,27 @@ export default function PostDetailPage() {
                     비공개 댓글입니다
                   </div>
                 )}
-                <div className="flex gap-2 justify-start">
-                  {canViewComment(comment) && (
-                    <Button
-                      className="p-0 text-metricsText"
-                      onClick={() => setReplyingTo(Number(comment.id))}
-                    >
-                      답장하기
-                    </Button>
-                  )}
-                  {session?.user.id === comment.author_id && (
-                    <Button
-                      className="text-metricsText rounded-button p-0"
-                      onClick={() => deleteHandleComment(Number(comment.id))}
-                    >
-                      삭제하기
-                    </Button>
-                  )}
-                </div>
+                {session && (
+                  <div className="flex gap-2 justify-start">
+                    {canViewComment(comment) && (
+                      <Button
+                        className="p-0 text-metricsText"
+                        onClick={() => toggleReply(Number(comment.id))}
+                      >
+                        {replyingTo === comment.id ? "답장 취소" : "답장하기"}
+                      </Button>
+                    )}
+                    {session?.user.id === comment.author_id && (
+                      <Button
+                        className="text-metricsText rounded-button p-0"
+                        onClick={() => deleteHandleComment(Number(comment.id))}
+                      >
+                        삭제하기
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
-
               {replyingTo === comment.id && (
                 <div className="flex flex-col border-l rounded-container border border-slate-containerColor overflow-hidden">
                   <Textarea
