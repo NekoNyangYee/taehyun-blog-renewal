@@ -1,17 +1,12 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import BookMarkDetailPage from "./Bookmark";
+// app/bookmark/page.tsx
+import dynamic from "next/dynamic";
 
-export default async function BookMarkPage() {
-  const supabase = createServerComponentClient({ cookies });
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+// ✅ 클라이언트에서만 실행되도록 withSessionCheck 적용된 컴포넌트를 불러옴
+const BookMarkPageWithSession = dynamic(
+  () => import("../bookmarks/BookMarkPageWithSession"),
+  { ssr: false }
+);
 
-  if (!session) {
-    redirect("/"); // ✅ 세션 없으면 홈으로 리디렉트
-  }
-
-  return <BookMarkDetailPage />;
+export default function Page() {
+  return <BookMarkPageWithSession />;
 }
