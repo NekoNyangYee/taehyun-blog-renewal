@@ -45,11 +45,9 @@ export default function CategoryPage({
 
   useEffect(() => {
     setIsPending(true);
-    if (posts.length === 0) {
-      fetchPosts().finally(() => {
-        setIsPending(false);
-      });
-    }
+    fetchPosts().then(() => {
+      setIsPending(false);
+    });
     fetchCategories();
   }, []);
 
@@ -64,6 +62,7 @@ export default function CategoryPage({
     const categoryFromURL = decodeURIComponent(pathname.split("/").pop() || "");
     if (categoryFromURL !== "posts" && selectedCategory !== categoryFromURL) {
       setSelectedCategory(categoryFromURL);
+      fetchPosts();
     }
   }, [pathname]);
 
@@ -110,7 +109,7 @@ export default function CategoryPage({
           </SelectContent>
         </Select>
       </div>
-      {isPending ? (
+      {isPending && posts.length === 0 ? (
         <div className="w-full h-[386px] flex items-center justify-center border border-containerColor rounded-container">
           <p className="text-gray-500 text-center">로딩 중...</p>
         </div>
