@@ -129,21 +129,6 @@ export default function PostDetailPage() {
   }, [post]);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", session?.user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (data) {
-            setIsAdmin(data.is_admin);
-          }
-        });
-    }
-  }, [session?.user?.id]);
-
-  useEffect(() => {
     if (post && session?.user?.id) {
       setIsHeartClicked(post.liked_by_user?.includes(session.user.id) ?? false);
     }
@@ -587,12 +572,6 @@ export default function PostDetailPage() {
                       >
                         {comment.author_name}
                       </span>
-                      {isAdmin && (
-                        <BadgeCheck
-                          size={22}
-                          className="fill-[#0075ff] text-white rounded-full"
-                        />
-                      )}
                       {comment.status && <LockIcon size={16} />}
                     </div>
                     <span className="text-[14px] text-metricsText">
