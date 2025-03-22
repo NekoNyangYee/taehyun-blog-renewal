@@ -13,7 +13,7 @@ import {
   XIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { supabase } from "@components/lib/supabaseClient";
@@ -28,6 +28,7 @@ export default function MobileNavBar({
   onClose: () => void;
 }) {
   const currentPath: string = usePathname();
+  const router = useRouter();
   const { fetchCategories } = useCategoriesStore();
   const { session, addSession } = useSessionStore();
   const [profileName, setProfileName] = useState<string>("");
@@ -71,6 +72,8 @@ export default function MobileNavBar({
     alert("로그아웃 되었습니다.");
     await supabase.auth.signOut();
     addSession(null);
+    router.push("/");
+    onClose();
   };
 
   const isActive = (path: string) =>
@@ -81,15 +84,12 @@ export default function MobileNavBar({
 
   return (
     <>
-      {/* 오버레이 */}
       {isOpen && (
         <div
           className="fixed top-0 left-0 w-full h-full bg-black/50 backdrop-blur-md z-30"
           onClick={onClose}
         ></div>
       )}
-
-      {/* 네비게이션 바 */}
       <aside
         className={`fixed top-0 left-0 pt-16 w-[70%] max-w-[300px] h-full bg-white flex flex-col justify-between items-center gap-2 z-40 shadow-lg transition-transform ${
           isOpen ? "translate-x-0" : "-translate-x-full"

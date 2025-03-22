@@ -506,6 +506,7 @@ export default function PostDetailPage() {
           }
           value={comment}
           onChange={(e) => setComment(e.target.value)}
+          disabled={!session}
         />
         <div className="flex gap-2 justify-end">
           {session ? (
