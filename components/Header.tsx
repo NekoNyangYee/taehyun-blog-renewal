@@ -57,8 +57,11 @@ export default function Header() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
+            <Link href={"https://github.com/NekoNyangYee"}>
+              <Image src={"/github.svg"} alt="line" width={32} height={32} />
+            </Link>
             {session && (
-              <>
+              <div className="flex items-center gap-2">
                 <p className="text-sm max-xl:hidden">
                   <strong className="text-blue-500">
                     {session?.user.user_metadata.full_name || "Unknown"}
@@ -73,7 +76,7 @@ export default function Header() {
                     height={32}
                   />
                 </div>
-              </>
+              </div>
             )}
             <button onClick={toggleMobileNav} className="2xl:hidden">
               {isMobileNavVisible ? (

@@ -32,6 +32,10 @@ export default function ProfileDetailPage() {
         company: "청주대학교 디지털보안학과 연구실",
         period: "2024. 11 ~ 현재",
       },
+      {
+        company: "청주대학교 창업동아리 trycatch",
+        period: "2025. 04 ~ 현재",
+      },
     ],
   });
 

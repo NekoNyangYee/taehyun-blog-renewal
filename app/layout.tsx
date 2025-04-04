@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@components/components/Header";
 import NavBar from "@components/components/NavBar";
@@ -21,9 +21,7 @@ export default function RootLayout({
         <Header />
         <div className="flex flex-1 max-w-[90rem] box-border mx-auto w-full pt-[65px]">
           <NavBar />
-          <Suspense fallback={<PageLoading />}>
-            {children}
-          </Suspense>
+          <Suspense fallback={<PageLoading />}>{children}</Suspense>
         </div>
       </body>
     </html>

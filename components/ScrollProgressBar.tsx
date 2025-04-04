@@ -1,11 +1,14 @@
 "use client";
 
+import { useUIStore } from "@components/store/postLoadingStore";
 import { usePathname } from "next/navigation";
 import React, { CSSProperties, useEffect, useState } from "react";
 
 export default function ScrollProgressBar() {
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const currentPath = usePathname();
+
+  const isPostLoading = useUIStore((state) => state.isPostLoading);
 
   useEffect(() => {
     const handleClientScrollBar = () => {
@@ -20,7 +23,6 @@ export default function ScrollProgressBar() {
       setScrollProgress(progress);
     };
 
-    // 초기 상태를 0으로 설정
     setScrollProgress(0);
     window.addEventListener("scroll", handleClientScrollBar);
 
@@ -29,7 +31,7 @@ export default function ScrollProgressBar() {
 
   const shouldShowProgressBar = /^\/posts\/[^\/]+\/\d+$/.test(currentPath);
 
-  return shouldShowProgressBar ? (
+  return shouldShowProgressBar && !isPostLoading ? (
     <div className="fixed top-0 left-0 w-full h-1 z-20">
       <div
         className="h-1 bg-black"

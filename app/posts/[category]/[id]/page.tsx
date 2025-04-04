@@ -17,6 +17,7 @@ import {
   EyeOffIcon,
   Heart,
   LockIcon,
+  MessageSquareXIcon,
   SendIcon,
   TagIcon,
 } from "lucide-react";
@@ -29,6 +30,7 @@ import { useCommentStore } from "@components/store/commentStore";
 import { Switch } from "@components/components/ui/switch";
 import { Textarea } from "@components/components/ui/textarea";
 import Image from "next/image";
+import { useUIStore } from "@components/store/postLoadingStore";
 
 interface Heading {
   id: string;
@@ -66,8 +68,11 @@ export default function PostDetailPage() {
   const [isStatus, setIsStatus] = useState<boolean>(true);
   const [isReplyStatus, setIsReplyStatus] = useState<boolean>(true);
 
+  const setPostLoading = useUIStore((state) => state.setPostLoading);
+
   useEffect(() => {
     const fetchPost = async () => {
+      setPostLoading(true);
       setLoading(true);
       const postId = pathname.split("/").pop();
 
@@ -109,10 +114,12 @@ export default function PostDetailPage() {
             }
 
             setLoading(false);
+            setPostLoading(false);
           }, 500);
         }
       } else {
         setLoading(false);
+        setPostLoading(false);
       }
     };
 
@@ -188,15 +195,22 @@ export default function PostDetailPage() {
     }, 500); // 500ms 대기 후 실행
   };
 
-  /** 새로고침 시 URL에 #이 있으면 해당 위치로 이동 */
   useEffect(() => {
-    setTimeout(() => {
-      const hash = decodeURIComponent(window.location.hash.replace("#", "")); // # 제거 후 디코딩
-      if (hash) {
-        scrollToHeading(hash, false); // URL 변경 없이 스크롤 이동만
+    const hash = decodeURIComponent(window.location.hash.replace("#", ""));
+    if (!hash) return;
+
+    const scrollToHash = () => {
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        // DOM에 아직 안 생겼으면 다음 프레임에서 다시 시도
+        requestAnimationFrame(scrollToHash);
       }
-    }, 1000); // 1초 대기 후 실행 (DOM이 완전히 로드되도록)
-  }, [updatedContent]); // 본문이 업데이트된 후 실행
+    };
+
+    scrollToHash(); // 실행
+  }, [updatedContent]);
 
   const category = myCategories.find((cat) => cat.id === post?.category_id);
   const imageUrl = categoryImages[category?.name || "/default.png"];
@@ -367,7 +381,7 @@ export default function PostDetailPage() {
   if (loading) return <PageLoading />;
 
   return (
-    <div className="h-full w-full max-w-[1200px] mx-auto p-4">
+    <div className="break-words whitespace-pre-wrap h-full w-full max-w-[1200px] mx-auto p-4">
       <div className="relative w-full h-72 overflow-hidden rounded-lg">
         <img
           src={imageUrl}
@@ -405,11 +419,11 @@ export default function PostDetailPage() {
           </div>
         </article>
         {headingGroups.length > 0 && (
-          <aside className="flex flex-col gap-2 lg:w-[300px] lg:sticky top-20 self-start p-4 bg-white border border-containerColor rounded-lg shadow-md">
+          <aside className="flex flex-col gap-2 lg:w-[300px] lg:sticky top-20 self-start p-4 bg-white border border-containerColor rounded-lg shadow-md w-full">
             <h3 className="text-lg font-semibold">목차</h3>
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-4">
               {headingGroups.map((group, index) => (
-                <div key={group.h2.id}>
+                <div key={group.h2.id} className="flex flex-col gap-2">
                   <li className="text-sm font-bold cursor-pointer hover:underline list-none">
                     <button
                       onClick={() => scrollToHeading(group.h2.id)}
@@ -419,7 +433,7 @@ export default function PostDetailPage() {
                     </button>
                   </li>
                   {group.h3.length > 0 && (
-                    <ul className="ml-2 flex flex-col gap-2">
+                    <ul className="ml-2 flex flex-col gap-4">
                       {group.h3.map((subHeading) => (
                         <li
                           key={subHeading.id}
@@ -720,8 +734,12 @@ export default function PostDetailPage() {
             </div>
           ))
       ) : (
-        <div className="flex flex-col gap-2 p-container rounded-container border border-slate-containerColor">
-          <p className="text-center text-lg flex justify-center items-center h-[120px]">
+        <div className="flex flex-col gap-2 p-container rounded-container border border-slate-containerColor h-[300px] items-center justify-center">
+          <MessageSquareXIcon
+            size={48}
+            className="text-gray-500 items-center justify-center mx-auto"
+          />
+          <p className="text-center text-gray-500 text-lg flex justify-center items-center ">
             댓글이 없습니다.
           </p>
         </div>
