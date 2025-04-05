@@ -5,7 +5,7 @@ const categoryImages: { [key: string]: string } = {
   NodeJS: "/nodejs.jpg",
   미분류: "/default.png",
   NextJS: "/nextjs.png",
-  "System-Security": "/linux.jpg",
+  Linux: "/linux.jpg",
 };
 
 export default categoryImages;
