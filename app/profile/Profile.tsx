@@ -43,48 +43,41 @@ export default function ProfileDetailPage() {
     contributions: { date: string; count: number; level: number }[]
   ) => {
     return contributions.map((activity) => ({
-      date: dayjs(activity.date).format("YYYY-MM-DD"), // dayjs로 날짜 변환
+      date: dayjs(activity.date).format("YYYY-MM-DD"),
       count: activity.count,
-      level: Math.min(4, Math.max(0, activity.level)) as 0 | 1 | 2 | 3 | 4, // 타입 보장
+      level: Math.min(4, Math.max(0, activity.level)) as 0 | 1 | 2 | 3 | 4,
     }));
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-6 bg-background p-container">
-      <div className="flex flex-col lg:flex-row items-center justify-between p-8 gap-6">
-        <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-gray-300 shadow-md">
-          <Image
-            src="/profile.jpg"
-            alt="Profile Picture"
-            width={160}
-            height={160}
-            className="object-cover w-full h-full"
-          />
-        </div>
-        <div className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1 space-y-3">
-          <h1 className="text-2xl font-bold">{profile.name}</h1>
-          <p className="text-sm text-gray-500">@{profile.username}</p>
-          <p className="text-base text-gray-700">{profile.description}</p>
-
-          <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-2">
-            <a
-              href={`mailto:${profile.email}`}
-              className="p-button border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition"
-            >
-              {profile.email}
-            </a>
-            <a
-              href={profile.github}
-              className="p-button border border-gray-700 text-gray-700 rounded-md hover:bg-gray-700 hover:text-white transition"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub
-            </a>
+    <div className="w-full h-full flex flex-col gap-6 bg-background z-0">
+      <div className="relative w-full h-[500px] bg-center bg-cover bg-no-repeat bg-[url('/profile.jpg')]">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white z-10" />
+        <div className="relative z-20 w-full h-full flex items-end justify-start p-8">
+          <div className="text-gray-800 space-y-2">
+            <h1 className="text-4xl font-bold">{profile.name}</h1>
+            <p className="text-lg">{profile.description}</p>
+            <div className="flex flex-wrap gap-4 mt-2">
+              <a
+                href={`mailto:${profile.email}`}
+                className="px-4 py-2 border border-gray-800 rounded-md hover:bg-gray-800 hover:text-white transition"
+              >
+                {profile.email}
+              </a>
+              <a
+                href={profile.github}
+                className="px-4 py-2 border border-gray-800 rounded-md hover:bg-gray-800 hover:text-white transition"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GitHub
+              </a>
+            </div>
           </div>
         </div>
       </div>
-      <div className="p-container border border-containerColor rounded-container">
+
+      <div className="p-container border border-containerColor rounded-container mx-4">
         <h2 className="text-xl font-semibold mb-4">기술 스택</h2>
         <div className="flex flex-wrap gap-2">
           {profile.stacks.map((stack, index) => (
@@ -97,10 +90,12 @@ export default function ProfileDetailPage() {
           ))}
         </div>
       </div>
-      <div className="p-container border border-containerColor rounded-container flex flex-col gap-2">
+
+      {/* GitHub Calendar */}
+      <div className="p-container border border-containerColor rounded-container mx-4">
         <h2 className="text-xl font-semibold">깃허브 컨트리뷰션</h2>
         <div className="w-full flex flex-col items-center">
-          <div className="w-full">
+          <div className="w-full overflow-x-auto">
             <GitHubCalendar
               username={profile.username}
               transformData={transformData}
@@ -119,7 +114,9 @@ export default function ProfileDetailPage() {
           </div>
         </div>
       </div>
-      <div className="p-container border border-containerColor rounded-container">
+
+      {/* 학력 */}
+      <div className="p-container border border-containerColor rounded-container mx-4">
         <h2 className="text-xl font-semibold mb-4">학력</h2>
         <div className="space-y-4">
           {profile.education.map((edu, index) => (
@@ -138,7 +135,7 @@ export default function ProfileDetailPage() {
           ))}
         </div>
       </div>
-      <div className="p-container border border-containerColor rounded-container">
+      <div className="p-container border border-containerColor rounded-container mx-4">
         <h2 className="text-xl font-semibold mb-4">활동</h2>
         <div className="space-y-4">
           {profile.career.map((job, index) => (

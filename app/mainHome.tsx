@@ -1,5 +1,6 @@
 "use client";
 
+import HeroSection from "@components/components/HeroSection";
 import { addUserToProfileTable } from "@components/lib/loginUtils";
 import { supabase } from "@components/lib/supabaseClient";
 import { formatDate } from "@components/lib/util/dayjs";
@@ -47,6 +48,7 @@ export default function MainHome() {
 
   return (
     <div className="p-container flex flex-col gap-2 w-full max-w-[90rem] mx-auto overflow-x-hidden">
+      <HeroSection />
       <div className="flex flex-col gap-4 rounded-container w-full">
         <div className="flex items-center justify-between">
           <h2 className="flex gap-2 text-2xl font-bold items-center">

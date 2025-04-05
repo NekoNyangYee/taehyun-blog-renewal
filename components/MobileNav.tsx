@@ -148,25 +148,6 @@ export default function MobileNavBar({
         <div className="flex flex-col gap-2 w-full p-container border-t border-containerColor items-center">
           {session ? (
             <>
-              <div className="flex items-center gap-2">
-                <div className="object-cover w-10 h-10 rounded-full overflow-hidden">
-                  <Image
-                    src={session.user?.user_metadata?.avatar_url || ""}
-                    width={48}
-                    height={48}
-                    alt="Profile"
-                    className="rounded-full"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-lg font-semibold">
-                    {profileName || "닉네임 없음"}
-                  </p>
-                  <span className="text-sm text-gray-600">
-                    {session.user?.email}
-                  </span>
-                </div>
-              </div>
               <Button
                 onClick={handleLogout}
                 className="w-full h-10 p-button border border-logoutColor bg-logoutButton text-logoutText flex items-center gap-2"

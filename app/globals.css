@@ -132,3 +132,14 @@ blockquote {
   --width-profile-image: 34px;
   --height-profile-image: 34px;
 }
+
+.mask-blob {
+  -webkit-mask-image: url("/blob.svg");
+  mask-image: url("/blob.svg");
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
