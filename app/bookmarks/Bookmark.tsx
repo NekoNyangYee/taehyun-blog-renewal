@@ -31,12 +31,6 @@ export default function BookMarkDetailPage() {
     fetchPosts(); // 전체 게시물 불러오기
   }, [userId]);
 
-  console.log("Current posts:", posts);
-  console.log("Current bookmarks:", bookmarks);
-  console.log(
-    "Filtered bookmarked posts:",
-    posts.filter((post) => bookmarks.includes(post.id))
-  );
 
   const bookmarkedPosts = posts.filter((post) => bookmarks.includes(post.id));
 
