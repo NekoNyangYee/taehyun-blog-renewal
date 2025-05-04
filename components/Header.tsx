@@ -33,16 +33,13 @@ export default function Header() {
       }
     };
 
-    fetchSession();
-  }, []);
-
-  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1536) {
         setMobileNavVisible(false);
       }
     };
 
+    fetchSession();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
