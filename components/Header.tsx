@@ -9,6 +9,7 @@ import LogoIcon from "./icons/LogoIcon";
 import { MenuIcon, XIcon } from "lucide-react";
 import MobileNavBar from "./MobileNav";
 import ScrollProgressBar from "./ScrollProgressBar";
+import SearchBar from "./SearchBar";
 
 export default function Header() {
   const { session, addSession } = useSessionStore();
@@ -54,6 +55,7 @@ export default function Header() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
+            <SearchBar />
             <Link href={"https://github.com/NekoNyangYee"}>
               <Image src={"/github.svg"} alt="line" width={32} height={32} />
             </Link>
