@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { usePostStore } from "@components/store/postStore";
 import { useCommentStore } from "@components/store/commentStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
+import { useSessionStore } from "@components/store/sessionStore";
 import Link from "next/link";
 
 export default function SearchBar() {
@@ -18,6 +19,7 @@ export default function SearchBar() {
   const { posts, bookmarks, fetchPosts, fetchBookmarkPosts } = usePostStore();
   const { comments, fetchComments } = useCommentStore();
   const { myCategories } = useCategoriesStore();
+  const { session } = useSessionStore();
 
   // 북마크된 게시물만 추출
   const bookmarkedPosts = posts.filter((post) => bookmarks.includes(post.id));
@@ -95,6 +97,13 @@ export default function SearchBar() {
     // 북마크 fetch는 필요시 추가
   }, [isVisible, posts, comments, fetchPosts, fetchComments]);
 
+  // 로그인(session) 정보가 생기면 북마크 fetch
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchBookmarkPosts(session.user.id);
+    }
+  }, [session, fetchBookmarkPosts]);
+
   const popup = (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
@@ -107,11 +116,11 @@ export default function SearchBar() {
         style={{ transform: 'translate(-50%, -50%)' }}
       >
         <div
-          className={`bg-white rounded-lg shadow-lg p-4 transition-all duration-300
+          className={`bg-white rounded-lg shadow-lg p-4 transition-all duration-300 mx-4
             ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         >
           <div className="flex items-center gap-2 border-b pb-4">
-            <Search size={20} className="text-gray-500" />
+            <Search size={28} className="text-gray-500" />
             <input
               type="text"
               placeholder="검색어를 입력하세요..."
@@ -163,8 +172,8 @@ export default function SearchBar() {
                 </ul>
               </div>
             )}
-            {/* 북마크 섹션 */}
-            {filteredBookmarkedPosts.length > 0 && (
+            {/* 북마크 섹션: 로그인한 유저만 */}
+            {session && filteredBookmarkedPosts.length > 0 && (
               <div className="border border-containerColor rounded-container p-container bg-white mb-4">
                 <h3 className="text-base font-bold mb-2 text-purple-600">북마크</h3>
                 <ul className="space-y-1">
@@ -195,10 +204,10 @@ export default function SearchBar() {
       <div className="relative">
         <button
           onClick={handleOpen}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+          className="flex bg-white items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors w-[170px] max-md:w-auto justify-start"
         >
-          <Search size={20} className="text-gray-500" />
-          <span className="text-gray-500">검색...</span>
+          <Search size={28} className="text-gray-500 w-6 h-6" />
+          <span className="text-gray-500 hidden md:inline">검색...</span>
         </button>
       </div>
       {isVisible && typeof window !== "undefined" && createPortal(popup, document.body)}

@@ -165,7 +165,7 @@ export default function PostsPage() {
                   >
                     <div
                       key={post.id}
-                      className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col"
+                      className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col hover:-translate-y-1 shadow-xl transition-all duration-200"
                     >
                       <div className="relative w-auto lg:h-44 md:h-48">
                         <img
