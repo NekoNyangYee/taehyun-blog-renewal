@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { CornerDownRight, Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePostStore } from "@components/store/postStore";
@@ -56,6 +56,20 @@ export default function SearchBar() {
   const getPostTitleById = (postId: number) => {
     const post = posts.find((p) => p.id === postId);
     return post ? post.title : "(삭제된 게시물)";
+  };
+
+  // 키워드 하이라이트 함수
+  const highlightKeyword = (text: string) => {
+    if (!keyword) return text;
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? (
+        <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
   };
 
   // 팝업 열기
@@ -140,12 +154,13 @@ export default function SearchBar() {
             {/* 게시물 섹션 */}
             {filteredPosts.length > 0 && (
               <div className="border border-containerColor rounded-container p-container bg-white mb-4">
-                <h3 className="text-base font-bold mb-2 text-blue-600">게시물</h3>
-                <ul className="space-y-1">
+                <h3 className="text-base font-bold mb-2">게시물</h3>
+                <ul className="p-0 flex flex-col gap-2">
                   {filteredPosts.map((post) => (
-                    <li key={post.id} className="truncate">
-                      <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="hover:underline" onClick={handleClose}>
-                        <span className="font-semibold">{post.title}</span>
+                    <li key={post.id} className="truncate p-container border border-containerColor rounded-container">
+                      <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="flex flex-col gap-2" onClick={handleClose}>
+                        <span className="text-sm text-gray-500">{myCategories.filter(cat => cat.id === post.category_id)[0].name}</span>
+                        <span className="font-semibold">{highlightKeyword(post.title)}</span>
                       </Link>
                     </li>
                   ))}
@@ -155,16 +170,17 @@ export default function SearchBar() {
             {/* 댓글 섹션 */}
             {filteredComments.length > 0 && (
               <div className="border border-containerColor rounded-container p-container bg-white mb-4">
-                <h3 className="text-base font-bold mb-2 text-green-600">댓글</h3>
+                <h3 className="text-base font-bold mb-2">댓글</h3>
                 <ul className="space-y-1">
                   {filteredComments.map((comment) => {
                     const post = posts.find((p) => p.id === comment.post_id);
                     if (!post) return null;
                     return (
-                      <li key={comment.id} className="truncate">
+                      <li key={comment.id} className="truncate flex gap-2 items-center">
+                        <CornerDownRight size={18} />
                         <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="hover:underline" onClick={handleClose}>
-                          <span className="text-gray-700">{comment.content}</span>
-                          <span className="ml-2 text-xs text-gray-400">(게시물: {post.title})</span>
+                          <span className="text-gray-700">{highlightKeyword(comment.content)}</span>
+                          <span className="ml-2 text-xs text-gray-400">(게시물: {highlightKeyword(post.title)})</span>
                         </Link>
                       </li>
                     );
@@ -180,7 +196,7 @@ export default function SearchBar() {
                   {filteredBookmarkedPosts.map((post) => (
                     <li key={post.id} className="truncate">
                       <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="hover:underline" onClick={handleClose}>
-                        <span className="font-semibold">{post.title}</span>
+                        <span className="font-semibold">{highlightKeyword(post.title)}</span>
                       </Link>
                     </li>
                   ))}
