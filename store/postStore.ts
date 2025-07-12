@@ -49,14 +49,11 @@ export const usePostStore = create<PostsProps>((set, get) => ({
     if (data) {
       data = data.filter((post) => post.visibility === "public");
       set({ posts: data });
-      console.log(data);
     }
   },
 
   fetchBookmarkPosts: async (userId) => {
     if (!userId) return;
-
-    console.log("Fetching bookmarks for user:", userId);
 
     const { data, error } = await supabase
       .from("bookmarks")
