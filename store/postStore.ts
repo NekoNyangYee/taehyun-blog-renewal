@@ -36,7 +36,7 @@ export const usePostStore = create<PostsProps>((set, get) => ({
   bookmarks: [], // 북마크된 게시물 목록
 
   fetchPosts: async () => {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("posts")
       .select("*")
       .order("created_at", { ascending: false });
@@ -47,7 +47,9 @@ export const usePostStore = create<PostsProps>((set, get) => ({
     }
 
     if (data) {
+      data = data.filter((post) => post.visibility === "public");
       set({ posts: data });
+      console.log(data);
     }
   },
 
