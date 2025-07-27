@@ -116,42 +116,44 @@ export default function ProfileDetailPage() {
       </div>
 
       {/* 학력 */}
-      <div className="p-container border border-containerColor rounded-container mx-4">
-        <h2 className="text-xl font-semibold mb-4">학력</h2>
-        <div className="space-y-4">
-          {profile.education.map((edu, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800"
-            >
-              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-white text-sm font-bold">
-                {index + 1}
-              </span>
-              <div>
-                <p className="text-lg font-semibold">{edu.school}</p>
-                <p className="text-sm text-gray-600">{edu.period}</p>
+      <div className="flex max-md:flex-col gap-4 mx-4">
+        <div className="w-full p-container border border-containerColor rounded-container mb-4">
+          <h2 className="text-xl font-semibold mb-4">학력</h2>
+          <div className="space-y-4">
+            {profile.education.map((edu, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800"
+              >
+                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-white text-sm font-bold">
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="text-lg font-semibold">{edu.school}</p>
+                  <p className="text-sm text-gray-600">{edu.period}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="p-container border border-containerColor rounded-container mx-4">
-        <h2 className="text-xl font-semibold mb-4">활동</h2>
-        <div className="space-y-4">
-          {profile.career.map((job, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800"
-            >
-              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-white text-sm font-bold">
-                {index + 1}
-              </span>
-              <div>
-                <p className="text-lg font-semibold">{job.company}</p>
-                <p className="text-sm text-gray-600">{job.period}</p>
+        <div className="w-full p-container border border-containerColor rounded-container mb-4">
+          <h2 className="text-xl font-semibold mb-4">활동</h2>
+          <div className="space-y-4">
+            {profile.career.map((job, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800"
+              >
+                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-white text-sm font-bold">
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="text-lg font-semibold">{job.company}</p>
+                  <p className="text-sm text-gray-600">{job.period}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
