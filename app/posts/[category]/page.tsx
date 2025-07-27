@@ -137,7 +137,7 @@ export default function CategoryPage({
                         <div
                           key={post.id}
                           className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1"
-                          >
+                        >
                           <div className="flex items-center justify-center object-cover w-auto lg:h-44 md:h-48 bg-gray-800">
                             <img
                               src={imageUrl}

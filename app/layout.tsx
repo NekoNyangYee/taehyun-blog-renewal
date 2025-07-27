@@ -4,6 +4,7 @@ import Header from "@components/components/Header";
 import NavBar from "@components/components/NavBar";
 import { Suspense } from "react";
 import PageLoading from "@components/components/loading/PageLoading";
+import Footer from "@components/components/Footer";
 
 export const metadata: Metadata = {
   title: "TaeHyun's Devlog",
@@ -23,6 +24,7 @@ export default function RootLayout({
           <NavBar />
           <Suspense fallback={<PageLoading />}>{children}</Suspense>
         </div>
+        <Footer />
       </body>
     </html>
   );
