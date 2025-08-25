@@ -1,13 +1,16 @@
 "use client";
 
-import Link from "next/link";
-
 export default function HeroSection() {
   return (
     <section className="relative w-full py-16 px-4 md:px-0 bg-gradient-to-br from-blue-100 via-white to-purple-100 overflow-hidden rounded-lg">
       {/* 배경 데코 */}
       <div className="absolute inset-0 pointer-events-none select-none">
-        <svg width="100%" height="100%" className="opacity-20" style={{position:'absolute',top:0,left:0}}>
+        <svg
+          width="100%"
+          height="100%"
+          className="opacity-20"
+          style={{ position: "absolute", top: 0, left: 0 }}
+        >
           <circle cx="80%" cy="20%" r="180" fill="#a5b4fc" />
           <circle cx="10%" cy="80%" r="120" fill="#fbcfe8" />
         </svg>

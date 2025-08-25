@@ -18,7 +18,6 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { supabase } from "@components/lib/supabaseClient";
 import { useSessionStore } from "@components/store/sessionStore";
-import Image from "next/image";
 
 export default function MobileNavBar({
   isOpen,

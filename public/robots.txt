@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://taehyun-blog-renewal.vercel.app/sitemap.xml
