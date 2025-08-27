@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { usePostStore } from "@components/store/postStore";
 import { useSessionStore } from "@components/store/sessionStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import categoryImages from "@components/lib/util/postThumbnail";
 import Link from "next/link";
 import {
   EyeIcon,
@@ -31,7 +30,6 @@ export default function BookMarkDetailPage() {
     fetchPosts(); // 전체 게시물 불러오기
   }, [userId]);
 
-
   const bookmarkedPosts = posts.filter((post) => bookmarks.includes(post.id));
 
   if (bookmarkedPosts.length === 0) {
@@ -53,7 +51,7 @@ export default function BookMarkDetailPage() {
           const category = myCategories.find(
             (cat) => cat.id === post.category_id
           );
-          const imageUrl = categoryImages[category?.name || "/default.png"];
+          const imageUrl = category?.thumbnail;
           const currentCategoryName = category?.name;
           const isBookmarked = bookmarks.includes(post.id);
 
