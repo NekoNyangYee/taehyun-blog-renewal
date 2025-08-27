@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { PostState, usePostStore } from "@components/store/postStore";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCategoriesStore } from "@components/store/categoriesStore";
-import categoryImages from "@components/lib/util/postThumbnail";
 import dayjs, { formatDate } from "@components/lib/util/dayjs";
 import Link from "next/link";
 import {
@@ -213,7 +212,7 @@ export default function PostDetailPage() {
   }, [updatedContent]);
 
   const category = myCategories.find((cat) => cat.id === post?.category_id);
-  const imageUrl = categoryImages[category?.name || "/default.png"];
+  const imageUrl = category?.thumbnail;
 
   if (!post) {
     return <PageLoading />;
