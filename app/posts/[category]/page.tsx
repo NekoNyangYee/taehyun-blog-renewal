@@ -13,7 +13,6 @@ import {
   MessageSquareTextIcon,
 } from "lucide-react";
 import { useCommentStore } from "@components/store/commentStore";
-import categoryImages from "@components/lib/util/postThumbnail";
 import Link from "next/link";
 import {
   Select,
@@ -122,11 +121,8 @@ export default function CategoryPage({
                     const category = myCategories.find(
                       (cat) => cat.id === post.category_id
                     );
-                    const imageUrl =
-                      categoryImages[category?.name || "/default.png"];
-                    const currentCategoryName = myCategories.find(
-                      (cat) => cat.id === post.category_id
-                    )?.name;
+                    const imageUrl = category?.thumbnail;
+                    const currentCategoryName = category?.name;
                     const isBookmarked = bookmarks.includes(post.id);
 
                     return (

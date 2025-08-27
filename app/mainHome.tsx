@@ -4,7 +4,6 @@ import HeroSection from "@components/components/HeroSection";
 import { addUserToProfileTable } from "@components/lib/loginUtils";
 import { supabase } from "@components/lib/supabaseClient";
 import { formatDate } from "@components/lib/util/dayjs";
-import categoryImages from "@components/lib/util/postThumbnail";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import { useCommentStore } from "@components/store/commentStore";
 import { usePostStore } from "@components/store/postStore";
@@ -71,8 +70,8 @@ export default function MainHome() {
                   const category = myCategories.find(
                     (cat) => cat.id === post.category_id
                   );
-                  const imageUrl =
-                    categoryImages[category?.name || "/default.png"];
+                  const imageUrl = category?.thumbnail;
+
                   const currentCategoryName = category?.name;
 
                   return (
@@ -144,8 +143,7 @@ export default function MainHome() {
                   const category = myCategories.find(
                     (cat) => cat.id === post.category_id
                   );
-                  const imageUrl =
-                    categoryImages[category?.name || "/default.png"];
+                  const imageUrl = category?.thumbnail;
                   const currentCategoryName = category?.name;
 
                   return (
@@ -212,7 +210,7 @@ export default function MainHome() {
         <div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr">
             {myCategories.map((category) => {
-              const imageUrl = categoryImages[category.name];
+              const imageUrl = category?.thumbnail;
               return (
                 <Link key={category.id} href={`/posts/${category.name}`}>
                   <div className="relative w-full h-20 overflow-hidden rounded-lg">
