@@ -2,18 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://taehyun-blog-renewal.vercel.app/</loc>
+    <lastmod>2025-09-10</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://taehyun-blog-renewal.vercel.app/posts</loc>
+    <loc>https://taehyun-blog-renewal.vercel.app/posts/</loc>
+    <lastmod>2025-09-10</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://taehyun-blog-renewal.vercel.app/bookmarks</loc>
+    <loc>https://taehyun-blog-renewal.vercel.app/bookmarks/</loc>
+    <lastmod>2025-09-10</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://taehyun-blog-renewal.vercel.app/profile</loc>
+    <loc>https://taehyun-blog-renewal.vercel.app/profile/</loc>
+    <lastmod>2025-09-10</lastmod>
     <priority>0.7</priority>
   </url>
 </urlset>
