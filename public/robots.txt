@@ -1,3 +1,9 @@
+# *
 User-agent: *
 Allow: /
+
+# Host
+Host: https://taehyun-blog-renewal.vercel.app
+
+# Sitemaps
 Sitemap: https://taehyun-blog-renewal.vercel.app/sitemap.xml
