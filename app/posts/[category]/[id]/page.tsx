@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PostState, usePostStore } from "@components/store/postStore";
+import {
+  PostState,
+  PostStateWithoutContents,
+  usePostStore,
+} from "@components/store/postStore";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import dayjs, { formatDate } from "@components/lib/util/dayjs";
@@ -90,7 +94,12 @@ export default function PostDetailPage() {
         return;
       }
 
-      setPost(selectedPost);
+      // selectedPost may come from the posts list and omit the 'contents' field;
+      // provide a safe fallback so the PostState type is satisfied until the full post is fetched.
+      setPost({
+        ...(selectedPost as PostStateWithoutContents),
+        contents: (selectedPost as any).contents ?? "",
+      });
 
       // 조회수 증가 로직 (한 번만 실행되도록 방지)
       if (!hasIncremented) {
