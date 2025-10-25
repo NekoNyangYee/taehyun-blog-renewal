@@ -18,7 +18,7 @@ export interface PostState {
 }
 
 interface PostsProps {
-  posts: PostState[];
+  posts: PostStateWithoutContents[];
   bookmarks: number[];
   fetchPosts: () => Promise<void>;
   fetchBookmarkPosts: (userId: string) => Promise<void>;
@@ -31,24 +31,34 @@ interface PostsProps {
   removeBookmark: (userId: string, postId: number) => Promise<void>;
 }
 
+export type PostStateWithoutContents = Omit<PostState, "contents">;
+
 export const usePostStore = create<PostsProps>((set, get) => ({
   posts: [],
   bookmarks: [], // 북마크된 게시물 목록
 
   fetchPosts: async () => {
-    let { data, error } = await supabase
-      .from("posts")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      // ✅ contents를 제외하고 필요한 필드만 가져오기
+      let { data, error } = await supabase
+        .from("posts")
+        .select(
+          "id, title, author_id, author_name, status, visibility, created_at, updated_at, view_count, like_count, category_id, liked_by_user"
+        )
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("게시물 불러오는 도중 에러", error);
-      return;
-    }
+      if (error) {
+        console.error("게시물 불러오는 도중 에러", error);
+        return;
+      }
 
-    if (data) {
-      data = data.filter((post) => post.visibility === "public");
-      set({ posts: data });
+      if (data) {
+        // public 게시물만 필터링
+        data = data.filter((post) => post.visibility === "public");
+        set({ posts: data });
+      }
+    } catch (err) {
+      console.error("🚨 fetchPosts 예외 발생:", err);
     }
   },
 
