@@ -86,24 +86,26 @@ export default function NavBar() {
               </Link>
             </div>
             <div className="w-full p-container border-t border-containerColor">
-              <div className="flex gap-2 mb-4">
-                <img
-                  src={
-                    session?.user?.user_metadata?.avatar_url ||
-                    "/default-profile.png"
-                  }
-                  alt="Profile Picture"
-                  className="w-10 h-10 rounded-full"
-                />
-                <div className="flex flex-col justify-between">
-                  <span className="break-all text-[14px] font-bold">
-                    {session?.user?.user_metadata?.name}
-                  </span>
-                  <span className="text-[12px] font-semibold text-metricsText">
-                    {session?.user?.email}
-                  </span>
+              {session && (
+                <div className="flex gap-2 mb-4">
+                  <img
+                    src={
+                      session?.user?.user_metadata?.avatar_url ||
+                      "/default-profile.png"
+                    }
+                    alt="Profile Picture"
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex flex-col justify-between">
+                    <span className="break-all text-[14px] font-bold">
+                      {session?.user?.user_metadata?.name}
+                    </span>
+                    <span className="text-[12px] font-semibold text-metricsText">
+                      {session?.user?.email}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
               {session ? (
                 <Button
                   onClick={handleLogout}
