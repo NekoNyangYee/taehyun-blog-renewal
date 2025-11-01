@@ -90,7 +90,7 @@ export default function MobileNavBar({
         ></div>
       )}
       <aside
-        className={`fixed top-0 left-0 pt-16 w-[70%] max-w-[300px] h-full bg-white flex flex-col justify-between items-center gap-2 z-40 shadow-lg transition-transform ${
+        className={`fixed top-0 left-0 pt-16 w-[70%] max-w-[300px] h-full bg-white flex flex-col justify-between items-center gap-2 z-40 shadow-lg transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -145,6 +145,24 @@ export default function MobileNavBar({
           </Link>
         </div>
         <div className="flex flex-col gap-2 w-full p-container border-t border-containerColor items-center">
+          <div className="flex gap-2 mb-4 w-full">
+            <img
+              src={
+                session?.user?.user_metadata?.avatar_url ||
+                "/default-profile.png"
+              }
+              alt="Profile Picture"
+              className="w-10 h-10 rounded-full"
+            />
+            <div className="flex flex-col justify-between">
+              <span className="break-all text-[14px] font-bold">
+                {session?.user?.user_metadata?.name}
+              </span>
+              <span className="text-[12px] font-semibold text-metricsText">
+                {session?.user?.email}
+              </span>
+            </div>
+          </div>
           {session ? (
             <>
               <Button

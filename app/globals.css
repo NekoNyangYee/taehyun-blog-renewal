@@ -15,35 +15,55 @@ html {
   height: 100vh;
 }
 
+/* ===== Code block (highlight.js) 기본 스타일 ===== */
+pre {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+pre code {
+  white-space: pre; /* 부모의 whitespace 영향 방지 */
+}
+code.hljs {
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+}
+pre code.hljs {
+  display: block;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+/* 게시물 본문 내 이미지 기본 스타일 (센터 정렬 + 반응형) */
+.post-content img {
+  display: block;
+  margin: 20px auto;
+  max-width: 100%;
+  height: auto;
+}
+
 h1 {
   @apply text-4xl font-bold; /* H1은 크고 두꺼운 글씨 */
-  line-height: 2;
+  line-height: 1.5;
+  margin: 16px 0;
 }
 
 h2 {
-  @apply text-3xl font-semibold;
-  line-height: 2;
+  @apply text-3xl font-bold;
+  line-height: 1.5;
+  margin: 16px 0;
 }
 
 h3 {
-  @apply text-2xl font-medium; /* H3는 작은 크기와 미디엄 폰트 */
-  line-height: 2;
+  @apply text-2xl font-bold; /* H3는 작은 크기와 두꺼운 글씨 */
+  line-height: 1.5;
+  margin: 16px 0;
 }
 
 h1,
 h2,
 p {
-  line-height: 2;
+  line-height: 1.8;
   text-align: left;
-}
-
-pre {
-  border-radius: 8px; /* 모서리 둥글게 */
-  line-height: 1.75; /* 라인 높이 */
-  padding: 0.25rem 0.5rem; /* 안쪽 여백 */
-  background-color: #3a3a3a;
-  color: #ffffff;
-  overflow: auto;
 }
 
 hr {
@@ -55,6 +75,7 @@ hr {
 ul {
   list-style-type: disc !important;
   padding-left: 1.5rem; /* 왼쪽 여백 */
+  margin-left: 1.2rem;
 }
 
 /* ✅ Ordered List (숫자 리스트) 스타일 유지 */

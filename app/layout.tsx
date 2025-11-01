@@ -5,6 +5,7 @@ import NavBar from "@components/components/NavBar";
 import { Suspense } from "react";
 import PageLoading from "@components/components/loading/PageLoading";
 import Footer from "@components/components/Footer";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "TaeHyun's Devlog",
@@ -60,6 +61,12 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+        {/* ✅ Highlight.js CSS (테마) */}
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+        />
       </head>
       <body className="flex flex-col h-screen">
         <Header />
@@ -68,6 +75,18 @@ export default function RootLayout({
           <Suspense fallback={<PageLoading />}>{children}</Suspense>
         </div>
         <Footer />
+
+        {/* ✅ Highlight.js Script (body 끝에 배치) */}
+        <Script
+          src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+          strategy="afterInteractive"
+        />
+        {/* ✅ 하이라이트 초기 실행 (DOM 하이드레이션 이후) */}
+        <Script id="hljs-init" strategy="afterInteractive">{`
+          if (typeof window !== 'undefined' && window.hljs) {
+            window.hljs.highlightAll();
+          }
+        `}</Script>
       </body>
     </html>
   );
