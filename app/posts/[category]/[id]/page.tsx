@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   PostState,
   PostStateWithoutContents,
@@ -148,6 +148,46 @@ export default function PostDetailPage() {
       setIsHeartClicked(post.liked_by_user?.includes(session.user.id) ?? false);
     }
   }, [post, session?.user?.id]);
+
+  /**
+   * React re-render가 발생해도 highlight.js가 추가한 DOM을 잃지 않도록,
+   * 별도 컴포넌트에서 innerHTML 주입과 하이라이트를 함께 처리합니다.
+   */
+  const RenderedContent: React.FC<{ html: string }> = ({ html }) => {
+    const ref = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      // HTML 주입
+      ref.current.innerHTML = html || "";
+
+      // 이미지 스타일 정렬 및 반응형 처리
+      ref.current.querySelectorAll("img").forEach((img) => {
+        const el = img as HTMLImageElement;
+        el.style.display = "block";
+        el.style.margin = "20px auto";
+        el.style.maxWidth = "100%";
+        el.style.height = "auto";
+      });
+
+      // 하이라이트 실행 (스크립트 지연 대비 소프트 재시도)
+      let attempts = 0;
+      const maxAttempts = 10;
+      const tryHighlight = () => {
+        const hljs = (window as any)?.hljs;
+        if (hljs) {
+          ref.current?.querySelectorAll("pre code").forEach((el) => {
+            hljs.highlightElement(el as HTMLElement);
+          });
+        } else if (++attempts < maxAttempts) {
+          setTimeout(tryHighlight, 150);
+        }
+      };
+      tryHighlight();
+    }, [html]);
+
+    return <div ref={ref} className="leading-relaxed post-content" />;
+  };
 
   /** 본문에서 h2, h3 태그에 고유 id 추가 */
   const extractHeadings = (htmlContent: string) => {
@@ -386,6 +426,18 @@ export default function PostDetailPage() {
     setReplyingTo((prev) => (prev === commentId ? null : commentId));
   };
 
+  //이미지 추출
+  const extractImg = () => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(
+      updatedContent || post?.contents || "",
+      "text/html"
+    );
+    const img = doc.querySelector("img");
+    img?.style.setProperty("margin", "0 auto", "important");
+    return img ? img.src : "";
+  };
+
   if (loading) return <PageLoading />;
 
   return (
@@ -422,14 +474,12 @@ export default function PostDetailPage() {
       </div>
       <div className="flex flex-col-reverse lg:flex-row gap-6 mt-6">
         <article className="flex-1 min-w-0">
-          <div className="leading-relaxed">
-            <div dangerouslySetInnerHTML={{ __html: updatedContent }} />
-          </div>
+          <RenderedContent html={updatedContent || post?.contents || ""} />
         </article>
         {headingGroups.length > 0 && (
           <aside className="flex flex-col gap-2 lg:w-[300px] lg:sticky top-20 self-start p-4 bg-white border border-containerColor rounded-lg shadow-md w-full">
             <h3 className="text-lg font-semibold">목차</h3>
-            <ul className="flex flex-col gap-4">
+            <p className="flex flex-col gap-4">
               {headingGroups.map((group, index) => (
                 <div key={group.h2.id} className="flex flex-col gap-2">
                   <li className="text-sm font-bold cursor-pointer hover:underline list-none">
@@ -459,7 +509,7 @@ export default function PostDetailPage() {
                   )}
                 </div>
               ))}
-            </ul>
+            </p>
           </aside>
         )}
       </div>

@@ -55,24 +55,6 @@ export default function Header() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            {session && (
-              <div className="flex items-center gap-2">
-                <p className="text-sm max-xl:hidden">
-                  <strong className="text-blue-500">
-                    {session?.user.user_metadata.full_name || "Unknown"}
-                  </strong>{" "}
-                  님 환영합니다.
-                </p>
-                <div className="object-cover w-8 h-8 rounded-full overflow-hidden">
-                  <Image
-                    src={session.user?.user_metadata.avatar_url || ""}
-                    alt="profile"
-                    width={32}
-                    height={32}
-                  />
-                </div>
-              </div>
-            )}
             <Link href={"https://github.com/NekoNyangYee"}>
               <Image src={"/github.svg"} alt="line" width={32} height={32} />
             </Link>
