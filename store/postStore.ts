@@ -142,7 +142,8 @@ export const usePostStore = create<PostsProps>((set, get) => ({
       return;
     }
 
-    await get().fetchPosts();
+    // ✅ 전체 목록을 다시 불러오지 않고, 로컬 상태만 업데이트 (깜빡임 방지)
+    // 상세 페이지에서 setPost로 이미 업데이트하므로 fetchPosts 불필요
   },
 
   // ✅ 북마크 추가
