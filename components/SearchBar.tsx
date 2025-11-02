@@ -217,7 +217,7 @@ export default function SearchBar() {
           <div
             ref={resultsContainerRef}
             id="search-results-container"
-            className="bg-whiteoverflow-hidden scrollbar-hide transition-all duration-300"
+            className="overflow-y-auto scrollbar-hide transition-all duration-300"
             style={{
               maxHeight: `${contentHeight}px`,
               opacity: contentHeight > 0 ? 1 : 0,
