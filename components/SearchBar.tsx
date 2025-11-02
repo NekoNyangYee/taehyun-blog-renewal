@@ -1,7 +1,7 @@
 "use client";
 
 import { CornerDownRight, Search } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { createPortal } from "react-dom";
 import { usePostStore } from "@components/store/postStore";
 import { useCommentStore } from "@components/store/commentStore";
@@ -13,7 +13,12 @@ export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const [showAllPosts, setShowAllPosts] = useState(false);
+  const [showAllBookmarks, setShowAllBookmarks] = useState(false);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const searchInputRef = useRef<HTMLDivElement>(null);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
 
   // zustand store에서 데이터 구독
   const { posts, bookmarks, fetchPosts, fetchBookmarkPosts } = usePostStore();
@@ -26,13 +31,19 @@ export default function SearchBar() {
 
   // 검색 결과 필터링
   const filteredPosts = keyword
-    ? posts.filter((post) => post.title.toLowerCase().includes(keyword.toLowerCase()))
+    ? posts.filter((post) =>
+        post.title.toLowerCase().includes(keyword.toLowerCase())
+      )
     : [];
   const filteredComments = keyword
-    ? comments.filter((comment) => comment.content.toLowerCase().includes(keyword.toLowerCase()))
+    ? comments.filter((comment) =>
+        comment.content.toLowerCase().includes(keyword.toLowerCase())
+      )
     : [];
   const filteredBookmarkedPosts = keyword
-    ? bookmarkedPosts.filter((post) => post.title.toLowerCase().includes(keyword.toLowerCase()))
+    ? bookmarkedPosts.filter((post) =>
+        post.title.toLowerCase().includes(keyword.toLowerCase())
+      )
     : [];
 
   // 게시물 id로 카테고리명 찾기
@@ -42,8 +53,8 @@ export default function SearchBar() {
     return post && (post as any).category_name
       ? (post as any).category_name
       : post && (post as any).category_id
-        ? (post as any).category_id
-        : "";
+      ? (post as any).category_id
+      : "";
   };
 
   // posts에서 카테고리 id로 카테고리 이름 찾기
@@ -52,38 +63,43 @@ export default function SearchBar() {
     return category ? category.name : "";
   };
 
-  // 댓글이 달린 게시물 제목 찾기
-  const getPostTitleById = (postId: number) => {
-    const post = posts.find((p) => p.id === postId);
-    return post ? post.title : "(삭제된 게시물)";
-  };
-
   // 키워드 하이라이트 함수
   const highlightKeyword = (text: string) => {
     if (!keyword) return text;
-    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const regex = new RegExp(
+      `(${keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi"
+    );
     const parts = text.split(regex);
     return parts.map((part, i) =>
       regex.test(part) ? (
-        <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark>
+        <mark key={i} className="bg-yellow-200 px-0.5 rounded">
+          {part}
+        </mark>
       ) : (
         <span key={i}>{part}</span>
       )
     );
   };
 
-  // 팝업 열기
   const handleOpen = () => {
     setIsVisible(true);
   };
 
-  // 팝업 닫기
   const handleClose = () => {
     setIsOpen(false);
+    setShowAllPosts(false); // 닫을 때 초기화
     setTimeout(() => setKeyword(""), 500);
   };
 
-  // 마운트/언마운트 및 애니메이션 제어
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isVisible) {
       const openTimeout = setTimeout(() => setIsOpen(true), 0);
@@ -111,104 +127,223 @@ export default function SearchBar() {
     // 북마크 fetch는 필요시 추가
   }, [isVisible, posts, comments, fetchPosts, fetchComments]);
 
-  // 로그인(session) 정보가 생기면 북마크 fetch
   useEffect(() => {
     if (session?.user?.id) {
       fetchBookmarkPosts(session.user.id);
     }
   }, [session, fetchBookmarkPosts]);
 
+  // 결과 내용의 실제 높이 계산 (검색 결과가 바뀔 때마다)
+  useEffect(() => {
+    if (resultsContainerRef.current) {
+      if (
+        filteredPosts.length > 0 ||
+        filteredBookmarkedPosts.length > 0 ||
+        keyword.length > 0
+      ) {
+        const container = resultsContainerRef.current;
+
+        // 새로운 높이 측정
+        const scrollHeight = container.scrollHeight;
+        const newHeight = Math.min(scrollHeight, 650);
+
+        // 높이가 줄어드는 경우
+        if (newHeight < contentHeight) {
+          // 먼저 새 높이로 설정
+          setContentHeight(newHeight);
+          // 0.2초 뒤에 애니메이션으로 전환 (CSS transition 시작)
+          setTimeout(() => {
+            // 이미 설정된 높이이므로 추가 작업 없음
+          }, 200);
+        } else {
+          // 높이가 늘어나는 경우: 기존 로직 유지
+          setContentHeight(contentHeight);
+          setTimeout(() => {
+            const currentScrollHeight = container.scrollHeight;
+            const currentNewHeight = Math.min(currentScrollHeight, 650);
+            setContentHeight(currentNewHeight);
+          }, 50);
+        }
+      } else {
+        setContentHeight(0);
+      }
+    }
+  }, [
+    filteredPosts.length,
+    filteredBookmarkedPosts.length,
+    showAllPosts,
+    showAllBookmarks,
+    keyword,
+  ]);
+
   const popup = (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
         onClick={handleClose}
       />
-      {/* Search Popup */}
-      <div className="absolute top-1/2 left-1/2 w-full max-w-2xl"
-        style={{ transform: 'translate(-50%, -50%)' }}
-      >
+      <div className="absolute top-1/2 left-1/2 w-full max-w-2xl transform -translate-x-1/2 -translate-y-96">
         <div
-          className={`bg-white rounded-lg shadow-lg p-4 transition-all duration-300 mx-4
-            ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+          className={`bg-white rounded-lg shadow-lg transition-all duration-300 mx-4 overflow-hidden
+            ${
+              isOpen
+                ? "translate-y-3 opacity-100 scale-100"
+                : "translate-y-0 opacity-0 scale-95"
+            }`}
         >
-          <div className="flex items-center gap-2 border-b pb-4">
-            <Search size={28} className="text-gray-500" />
+          <div
+            className="flex items-center gap-2 border-b p-container"
+            ref={searchInputRef}
+          >
+            <Search size={20} className="text-gray-500" />
             <input
               type="text"
               placeholder="검색어를 입력하세요..."
-              className="w-full outline-none text-lg"
+              className="w-full outline-none text-base"
               autoFocus
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              onChange={(e) => {
+                setKeyword(e.target.value);
+                if (e.target.value.length === 0) {
+                  setShowAllBookmarks(false);
+                  setShowAllPosts(false);
+                }
+              }}
             />
           </div>
-          <div className="mt-4 space-y-6 max-h-[400px] overflow-y-auto">
-            {/* 검색어가 없을 때 안내문 */}
-            {!keyword && (
-              <div className="flex items-center justify-center min-h-[120px] border border-dashed border-containerColor rounded-container bg-gray-50 text-gray-400 text-base font-medium">
-                검색하면 이 곳에 결과가 표시됩니다.
-              </div>
-            )}
-            {/* 게시물 섹션 */}
+          <div
+            ref={resultsContainerRef}
+            id="search-results-container"
+            className="bg-whiteoverflow-hidden scrollbar-hide transition-all duration-300"
+            style={{
+              maxHeight: `${contentHeight}px`,
+              opacity: contentHeight > 0 ? 1 : 0,
+            }}
+          >
             {filteredPosts.length > 0 && (
-              <div className="border border-containerColor rounded-container p-container bg-white mb-4">
-                <h3 className="text-base font-bold mb-2">게시물</h3>
-                <ul className="p-0 flex flex-col gap-2">
-                  {filteredPosts.map((post) => (
-                    <li key={post.id} className="truncate p-container border border-containerColor rounded-container">
-                      <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="flex flex-col gap-2" onClick={handleClose}>
-                        <span className="text-sm text-gray-500">{myCategories.filter(cat => cat.id === post.category_id)[0].name}</span>
-                        <span className="font-semibold">{highlightKeyword(post.title)}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {/* 댓글 섹션 */}
-            {filteredComments.length > 0 && (
-              <div className="border border-containerColor rounded-container p-container bg-white mb-4">
-                <h3 className="text-base font-bold mb-2">댓글</h3>
-                <ul className="space-y-1">
-                  {filteredComments.map((comment) => {
-                    const post = posts.find((p) => p.id === comment.post_id);
-                    if (!post) return null;
-                    return (
-                      <li key={comment.id} className="truncate flex gap-2 items-center">
-                        <CornerDownRight size={18} />
-                        <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="hover:underline" onClick={handleClose}>
-                          <span className="text-gray-700">{highlightKeyword(comment.content)}</span>
-                          <span className="ml-2 text-xs text-gray-400">(게시물: {highlightKeyword(post.title)})</span>
+              <div className="mb-4">
+                <h3 className="text-base font-bold mx-4">게시물</h3>
+                <div className="p-0 flex flex-col">
+                  {filteredPosts
+                    .slice(0, showAllPosts ? filteredPosts.length : 5)
+                    .map((post) => (
+                      <div
+                        key={post.id}
+                        className="truncate p-container hover:bg-gray-200 hover:transition-transform duration-200"
+                      >
+                        <Link
+                          href={`/posts/${getCategoryName(post)}/${post.id}`}
+                          className="flex gap-2 items-center"
+                          onClick={handleClose}
+                        >
+                          <div className="flex flex-col gap-2 flex-1">
+                            <span className="text-sm text-gray-500">
+                              {
+                                myCategories.filter(
+                                  (cat) => cat.id === post.category_id
+                                )[0].name
+                              }
+                            </span>
+                            <span className="font-semibold truncate max-w-60">
+                              {highlightKeyword(post.title)}
+                            </span>
+                          </div>
+                          <img
+                            src={
+                              myCategories.find(
+                                (cat) => cat.id === post.category_id
+                              )?.thumbnail
+                            }
+                            alt="thumbnail"
+                            className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                          />
                         </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
+                      </div>
+                    ))}
+                </div>
+                {filteredPosts.length > 5 && (
+                  <div className="flex justify-center py-4">
+                    <button
+                      className="text-base bg-black py-2 text-white px-4 rounded-md"
+                      onClick={() => setShowAllPosts(!showAllPosts)}
+                    >
+                      {showAllPosts
+                        ? "접기"
+                        : `더보기 (${filteredPosts.length - 5}개)`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-            {/* 북마크 섹션: 로그인한 유저만 */}
             {session && filteredBookmarkedPosts.length > 0 && (
-              <div className="border border-containerColor rounded-container p-container bg-white mb-4">
-                <h3 className="text-base font-bold mb-2 text-purple-600">북마크</h3>
-                <ul className="space-y-1">
-                  {filteredBookmarkedPosts.map((post) => (
-                    <li key={post.id} className="truncate">
-                      <Link href={`/posts/${getCategoryName(post)}/${post.id}`} className="hover:underline" onClick={handleClose}>
-                        <span className="font-semibold">{highlightKeyword(post.title)}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+              <div className="border border-t-containerColor">
+                <h3 className="text-base font-bold mx-4">나의 북마크</h3>
+                <div className="p-0 flex flex-col">
+                  {filteredBookmarkedPosts
+                    .slice(
+                      0,
+                      showAllBookmarks ? filteredBookmarkedPosts.length : 5
+                    )
+                    .map((post) => (
+                      <div
+                        key={post.id}
+                        className="truncate p-container hover:bg-gray-200 hover:transition-transform duration-200"
+                      >
+                        <Link
+                          href={`/posts/${getCategoryName(post)}/${post.id}`}
+                          className="flex gap-2 items-center"
+                          onClick={handleClose}
+                        >
+                          <div className="flex flex-col gap-2 flex-1">
+                            <span className="text-sm text-gray-500">
+                              {
+                                myCategories.filter(
+                                  (cat) => cat.id === post.category_id
+                                )[0].name
+                              }
+                            </span>
+                            <span className="font-semibold truncate max-w-60">
+                              {highlightKeyword(post.title)}
+                            </span>
+                          </div>
+                          <img
+                            src={
+                              myCategories.find(
+                                (cat) => cat.id === post.category_id
+                              )?.thumbnail
+                            }
+                            alt="thumbnail"
+                            className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                          />
+                        </Link>
+                      </div>
+                    ))}
+                </div>
+                {filteredBookmarkedPosts.length > 5 && (
+                  <div className="flex justify-center py-container">
+                    <button
+                      className="text-base bg-black py-2 text-white px-4 rounded-md"
+                      onClick={() => setShowAllBookmarks(!showAllBookmarks)}
+                    >
+                      {showAllBookmarks
+                        ? "접기"
+                        : `더보기 (${filteredBookmarkedPosts.length - 5}개)`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-            {/* 결과가 하나도 없을 때 */}
-            {keyword && filteredPosts.length === 0 && filteredComments.length === 0 && filteredBookmarkedPosts.length === 0 && (
-              <div className="flex items-center justify-center min-h-[120px] border border-dashed border-containerColor rounded-container bg-gray-50 text-gray-400 text-base font-medium">
-                검색 결과가 없습니다.
-              </div>
-            )}
+            {keyword &&
+              filteredPosts.length === 0 &&
+              filteredComments.length === 0 &&
+              filteredBookmarkedPosts.length === 0 && (
+                <div className="flex items-center justify-center min-h-[120px] bg-gray-50 text-gray-400 text-base font-medium">
+                  검색 결과가 없습니다.
+                </div>
+              )}
           </div>
         </div>
       </div>
@@ -220,13 +355,18 @@ export default function SearchBar() {
       <div className="relative">
         <button
           onClick={handleOpen}
-          className="flex bg-white items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors w-[170px] max-md:w-auto justify-start"
+          className="flex bg-white items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 w-[270px] max-md:w-auto justify-start max-md:bg-transparent max-md:border-none"
         >
-          <Search size={28} className="text-gray-500 w-6 h-6" />
+          <Search
+            size={20}
+            className="text-gray-500 max-md:text-black w-6 h-6"
+          />
           <span className="text-gray-500 hidden md:inline">검색...</span>
         </button>
       </div>
-      {isVisible && typeof window !== "undefined" && createPortal(popup, document.body)}
+      {isVisible &&
+        typeof window !== "undefined" &&
+        createPortal(popup, document.body)}
     </>
   );
-} 
+}

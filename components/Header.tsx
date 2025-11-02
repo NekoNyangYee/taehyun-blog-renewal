@@ -54,17 +54,13 @@ export default function Header() {
               <LogoIcon />
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link href={"https://github.com/NekoNyangYee"}>
               <Image src={"/github.svg"} alt="line" width={32} height={32} />
             </Link>
             <SearchBar />
             <button onClick={toggleMobileNav} className="2xl:hidden">
-              {isMobileNavVisible ? (
-                <XIcon size={24} />
-              ) : (
-                <MenuIcon size={24} />
-              )}
+              <MenuIcon size={24} />
             </button>
           </div>
         </div>

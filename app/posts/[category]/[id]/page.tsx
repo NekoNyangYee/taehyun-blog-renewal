@@ -478,7 +478,7 @@ export default function PostDetailPage() {
         </article>
         {headingGroups.length > 0 && (
           <aside className="flex flex-col gap-2 lg:w-[300px] lg:sticky top-20 self-start p-4 bg-white border border-containerColor rounded-lg shadow-md w-full">
-            <h3 className="text-lg font-semibold">목차</h3>
+            <h3 className="text-lg font-semibold m-0">목차</h3>
             <p className="flex flex-col gap-4">
               {headingGroups.map((group, index) => (
                 <div key={group.h2.id} className="flex flex-col gap-2">
