@@ -161,3 +161,14 @@ blockquote {
   -webkit-mask-position: center;
   mask-position: center;
 }
+
+/* 스크롤바 숨김 */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

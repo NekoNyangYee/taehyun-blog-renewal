@@ -31,6 +31,8 @@ export default function MobileNavBar({
   const { fetchCategories } = useCategoriesStore();
   const { session, addSession } = useSessionStore();
   const [profileName, setProfileName] = useState<string>("");
+  const [isVisible, setIsVisible] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -61,18 +63,27 @@ export default function MobileNavBar({
 
   useEffect(() => {
     if (isOpen) {
+      setIsVisible(true);
       document.body.style.overflow = "hidden";
-    } else {
+      setTimeout(() => setIsAnimating(true), 10); // 마운트 후 애니메이션 시작
+    } else if (isVisible) {
+      // 닫기 시작
+      setIsAnimating(false);
       document.body.style.overflow = "auto";
+      setTimeout(() => setIsVisible(false), 300); // 애니메이션 후 언마운트
     }
-  }, [isOpen]);
+  }, [isOpen, isVisible]);
+
+  const handleClose = () => {
+    onClose();
+  };
 
   const handleLogout = async () => {
     alert("로그아웃 되었습니다.");
     await supabase.auth.signOut();
     addSession(null);
     router.push("/");
-    onClose();
+    handleClose();
   };
 
   const isActive = (path: string) =>
@@ -81,21 +92,25 @@ export default function MobileNavBar({
       ? "bg-black text-white font-semibold"
       : "bg-transparent text-gray-700 hover:bg-gray-100";
 
+  if (!isVisible) return null;
+
   return (
     <>
-      {isOpen && (
+      {isVisible && (
         <div
-          className="fixed top-0 left-0 w-full h-full bg-black/50 backdrop-blur-md z-30"
-          onClick={onClose}
+          className={`fixed top-0 left-0 w-full h-full bg-black/50 backdrop-blur-md z-30 transition-opacity duration-300 ${
+            isAnimating ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={handleClose}
         ></div>
       )}
       <aside
         className={`fixed top-0 left-0 pt-16 w-[70%] max-w-[300px] h-full bg-white flex flex-col justify-between items-center gap-2 z-40 shadow-lg transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          isAnimating ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-0 right-0 m-4 bg-white shadow-none rounded-full"
         >
           <XIcon size={24} />
@@ -106,7 +121,7 @@ export default function MobileNavBar({
             className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
               "/"
             )}`}
-            onClick={onClose}
+            onClick={handleClose}
           >
             <HomeIcon size={18} />
             <span className="truncate">홈</span>
@@ -116,7 +131,7 @@ export default function MobileNavBar({
             className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
               "/posts"
             )}`}
-            onClick={onClose}
+            onClick={handleClose}
           >
             <Grid2X2Icon size={18} />
             <span className="truncate">게시물</span>
@@ -127,7 +142,7 @@ export default function MobileNavBar({
               className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
                 "/bookmarks"
               )}`}
-              onClick={onClose}
+              onClick={handleClose}
             >
               <StarIcon size={18} />
               <span className="truncate">북마크</span>
@@ -138,7 +153,7 @@ export default function MobileNavBar({
             className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
               "/profile"
             )}`}
-            onClick={onClose}
+            onClick={handleClose}
           >
             <HandIcon size={18} />
             <span className="truncate">안녕하세요!</span>
@@ -179,7 +194,7 @@ export default function MobileNavBar({
             <Link
               href="/login"
               className="w-full h-10 p-button border border-editButton rounded-button bg-editButton text-loginText flex items-center justify-center gap-2"
-              onClick={onClose}
+              onClick={handleClose}
             >
               <LogInIcon size={18} />
               로그인
