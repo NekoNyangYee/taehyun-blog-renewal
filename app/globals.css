@@ -44,19 +44,16 @@ pre code.hljs {
 h1 {
   @apply text-4xl font-bold; /* H1은 크고 두꺼운 글씨 */
   line-height: 1.5;
-  margin: 16px 0;
 }
 
 h2 {
   @apply text-3xl font-bold;
   line-height: 1.5;
-  margin: 16px 0;
 }
 
 h3 {
   @apply text-2xl font-bold; /* H3는 작은 크기와 두꺼운 글씨 */
   line-height: 1.5;
-  margin: 16px 0;
 }
 
 h1,

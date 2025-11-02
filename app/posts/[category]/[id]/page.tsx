@@ -46,6 +46,50 @@ interface HeadingGroup {
   h3: Heading[];
 }
 
+/**
+ * 별도 컴포넌트로 분리: 부모 재렌더 시에도 컴포넌트 아이덴티티 유지되어 깜빡임 방지
+ */
+function RenderedContent({ html }: { html: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = html || "";
+
+    // 이미지 스타일
+    ref.current.querySelectorAll("img").forEach((img) => {
+      const el = img as HTMLImageElement;
+      el.style.display = "block";
+      el.style.margin = "20px auto";
+      el.style.maxWidth = "100%";
+      el.style.height = "auto";
+    });
+
+    // 제목 여백
+    ref.current.querySelectorAll("h1, h2, h3").forEach((heading) => {
+      const el = heading as HTMLHeadingElement;
+      el.style.margin = "1rem 0";
+    });
+
+    // 하이라이트
+    let attempts = 0;
+    const maxAttempts = 10;
+    const tryHighlight = () => {
+      const hljs = (window as any)?.hljs;
+      if (hljs) {
+        ref.current?.querySelectorAll("pre code").forEach((el) => {
+          hljs.highlightElement(el as HTMLElement);
+        });
+      } else if (++attempts < maxAttempts) {
+        setTimeout(tryHighlight, 150);
+      }
+    };
+    tryHighlight();
+  }, [html]);
+
+  return <div ref={ref} className="leading-relaxed post-content" />;
+}
+
 export default function PostDetailPage() {
   const { posts, fetchPosts } = usePostStore();
   const { myCategories } = useCategoriesStore();
@@ -135,59 +179,21 @@ export default function PostDetailPage() {
     fetchComments(String(id));
   }, [pathname]); // hasIncremented 제거하여 의도치 않은 반복 실행 방지
 
+  // 본문 내용이 실제로 바뀔 때만 목차 재계산 (좋아요로 인한 불필요한 재계산 방지)
   useEffect(() => {
     if (post?.contents) {
       const { headings, updatedHtml } = extractHeadings(post.contents);
       setHeadings(headings);
       setUpdatedContent(updatedHtml);
     }
-  }, [post]);
+  }, [post?.contents]);
 
+  // 좋아요 상태만 감시 (다른 post 필드 변경 시 불필요한 실행 방지)
   useEffect(() => {
     if (post && session?.user?.id) {
       setIsHeartClicked(post.liked_by_user?.includes(session.user.id) ?? false);
     }
-  }, [post, session?.user?.id]);
-
-  /**
-   * React re-render가 발생해도 highlight.js가 추가한 DOM을 잃지 않도록,
-   * 별도 컴포넌트에서 innerHTML 주입과 하이라이트를 함께 처리합니다.
-   */
-  const RenderedContent: React.FC<{ html: string }> = ({ html }) => {
-    const ref = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-      if (!ref.current) return;
-      // HTML 주입
-      ref.current.innerHTML = html || "";
-
-      // 이미지 스타일 정렬 및 반응형 처리
-      ref.current.querySelectorAll("img").forEach((img) => {
-        const el = img as HTMLImageElement;
-        el.style.display = "block";
-        el.style.margin = "20px auto";
-        el.style.maxWidth = "100%";
-        el.style.height = "auto";
-      });
-
-      // 하이라이트 실행 (스크립트 지연 대비 소프트 재시도)
-      let attempts = 0;
-      const maxAttempts = 10;
-      const tryHighlight = () => {
-        const hljs = (window as any)?.hljs;
-        if (hljs) {
-          ref.current?.querySelectorAll("pre code").forEach((el) => {
-            hljs.highlightElement(el as HTMLElement);
-          });
-        } else if (++attempts < maxAttempts) {
-          setTimeout(tryHighlight, 150);
-        }
-      };
-      tryHighlight();
-    }, [html]);
-
-    return <div ref={ref} className="leading-relaxed post-content" />;
-  };
+  }, [post?.liked_by_user, session?.user?.id]);
 
   /** 본문에서 h2, h3 태그에 고유 id 추가 */
   const extractHeadings = (htmlContent: string) => {
@@ -424,18 +430,6 @@ export default function PostDetailPage() {
 
   const toggleReply = (commentId: number) => {
     setReplyingTo((prev) => (prev === commentId ? null : commentId));
-  };
-
-  //이미지 추출
-  const extractImg = () => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(
-      updatedContent || post?.contents || "",
-      "text/html"
-    );
-    const img = doc.querySelector("img");
-    img?.style.setProperty("margin", "0 auto", "important");
-    return img ? img.src : "";
   };
 
   if (loading) return <PageLoading />;

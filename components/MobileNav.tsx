@@ -161,7 +161,7 @@ export default function MobileNavBar({
         </div>
         <div className="flex flex-col gap-2 w-full p-container border-t border-containerColor items-center">
           {session && (
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 w-full">
               <img
                 src={
                   session?.user?.user_metadata?.avatar_url ||
