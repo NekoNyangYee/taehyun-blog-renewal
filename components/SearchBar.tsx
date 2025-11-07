@@ -241,7 +241,9 @@ export default function SearchBar() {
             style={{
               maxHeight: `${Math.min(
                 contentHeight,
-                window.innerHeight * 0.8 - 80
+                typeof window !== "undefined"
+                  ? window.innerHeight * 0.8 - 80
+                  : 650
               )}px`,
               opacity: contentHeight > 0 ? 1 : 0,
               WebkitOverflowScrolling: "touch",
