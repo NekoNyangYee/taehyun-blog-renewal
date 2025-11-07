@@ -176,6 +176,26 @@ export default function SearchBar() {
     keyword,
   ]);
 
+  // 화면 크기 변경 시 높이 재계산
+  useEffect(() => {
+    const handleResize = () => {
+      if (resultsContainerRef.current && isOpen && contentHeight > 0) {
+        const container = resultsContainerRef.current;
+        const scrollHeight = container.scrollHeight;
+        const newHeight = Math.min(scrollHeight, 650);
+        setContentHeight(newHeight);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, [isOpen, contentHeight]);
+
   const popup = (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
@@ -185,9 +205,9 @@ export default function SearchBar() {
         }`}
         onClick={handleClose}
       />
-      <div className="absolute top-1/2 left-1/2 w-full max-w-2xl transform -translate-x-1/2 -translate-y-96">
+      <div className="absolute top-[10%] left-1/2 w-full max-w-2xl transform -translate-x-1/2">
         <div
-          className={`bg-white rounded-lg shadow-lg transition-all duration-300 mx-4 overflow-hidden
+          className={`bg-white rounded-lg shadow-lg transition-all duration-300 mx-4 overflow-hidden max-h-[80vh]
             ${
               isOpen
                 ? "translate-y-3 opacity-100 scale-100"
@@ -219,13 +239,17 @@ export default function SearchBar() {
             id="search-results-container"
             className="overflow-y-auto scrollbar-hide transition-all duration-300"
             style={{
-              maxHeight: `${contentHeight}px`,
+              maxHeight: `${Math.min(
+                contentHeight,
+                window.innerHeight * 0.8 - 80
+              )}px`,
               opacity: contentHeight > 0 ? 1 : 0,
+              WebkitOverflowScrolling: "touch",
             }}
           >
             {filteredPosts.length > 0 && (
               <div className="mb-4">
-                <h3 className="text-base font-bold mx-4">게시물</h3>
+                <h3 className="text-base font-bold mx-4 pt-4">게시물</h3>
                 <div className="p-0 flex flex-col">
                   {filteredPosts
                     .slice(0, showAllPosts ? filteredPosts.length : 5)
@@ -280,7 +304,7 @@ export default function SearchBar() {
             )}
             {session && filteredBookmarkedPosts.length > 0 && (
               <div className="border border-t-containerColor">
-                <h3 className="text-base font-bold mx-4">나의 북마크</h3>
+                <h3 className="text-base font-bold mx-4 pt-4">나의 북마크</h3>
                 <div className="p-0 flex flex-col">
                   {filteredBookmarkedPosts
                     .slice(
@@ -355,11 +379,11 @@ export default function SearchBar() {
       <div className="relative">
         <button
           onClick={handleOpen}
-          className="flex bg-white items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 w-[270px] max-md:w-auto justify-start max-md:bg-transparent max-md:border-none"
+          className="flex bg-white items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 w-[270px] max-md:w-auto justify-start max-md:bg-transparent max-md:border-none cursor-text"
         >
           <Search
-            size={20}
-            className="text-gray-500 max-md:text-black w-6 h-6"
+            size={28}
+            className="text-gray-500 max-md:text-black w-5 h-5"
           />
           <span className="text-gray-500 hidden md:inline">검색...</span>
         </button>
