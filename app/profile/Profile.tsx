@@ -13,15 +13,15 @@ export default function ProfileDetailPage() {
     github: "https://github.com/NekoNyangYee",
     description: "안녕하세요! 프론트엔드 개발자 김태현입니다.",
     stacks: [
-      { name: "React", color: "bg-blue-400 text-white" },
-      { name: "TypeScript", color: "bg-blue-600 text-white" },
-      { name: "Next.js", color: "bg-black text-white" },
-      { name: "Styled-Components", color: "bg-pink-400 text-white" },
-      { name: "Emotion", color: "bg-pink-400 text-white" },
-      { name: "TailwindCSS", color: "bg-teal-400 text-white" },
-      { name: "Zustand", color: "bg-purple-600 text-white" },
-      { name: "Vercel", color: "bg-black text-white" },
-      { name: "ShadCn-UI", color: "bg-black text-white" },
+      { name: "React", bgcolor: "33302E", logocolor: "61DAFB" },
+      { name: "JavaScript", bgcolor: "F7DF1E", logocolor: "000000" },
+      { name: "TypeScript", bgcolor: "3178C6", logocolor: "FFFFFF" },
+      { name: "Next.js", bgcolor: "000000", logocolor: "FFFFFF" },
+      { name: "TailwindCSS", bgcolor: "06B6D4", logocolor: "FFFFFF" },
+      { name: "Zustand", bgcolor: "3178C6", logocolor: "FFFFFF" },
+      { name: "Vercel", bgcolor: "000000", logocolor: "FFFFFF" },
+      { name: "shadcnui", bgcolor: "000000", logocolor: "FFFFFF" },
+      { name: "git", bgcolor: "F05032", logocolor: "FFFFFF" },
     ],
     education: [
       { school: "청석고등학교", period: "2018 ~ 2021 졸업" },
@@ -33,7 +33,7 @@ export default function ProfileDetailPage() {
         period: "2024. 11 ~ 현재",
       },
       {
-        company: "청주대학교 창업동아리 trycatch",
+        company: "청주대학교 창업동아리",
         period: "2025. 04 ~ 현재",
       },
     ],
@@ -81,12 +81,12 @@ export default function ProfileDetailPage() {
         <h2 className="text-xl font-semibold mb-4">기술 스택</h2>
         <div className="flex flex-wrap gap-2">
           {profile.stacks.map((stack, index) => (
-            <span
+            <img
               key={index}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${stack.color}`}
-            >
-              {stack.name}
-            </span>
+              src={`https://img.shields.io/badge/${stack.name}-${stack.bgcolor}?style=for-the-badge&logo=${stack.name}&logoColor=${stack.logocolor}`}
+              alt={stack.name}
+              className={`rounded-md`}
+            />
           ))}
         </div>
       </div>
