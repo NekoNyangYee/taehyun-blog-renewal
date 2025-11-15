@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   PostState,
   PostStateWithoutContents,
@@ -48,6 +48,13 @@ export default function PostsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filteredPosts, setFilteredPosts] = useState(posts);
   const [sortOrder, setSortOrder] = useState<string>("new-sort");
+  const [loadedCount, setLoadedCount] = useState(postSize); // 초기값을 postSize로
+  const [isPending, startTransition] = useTransition();
+
+  // Refs to avoid stale closures in scroll handler
+  const loadedCountRef = useRef(postSize);
+  const sortedLengthRef = useRef(0);
+  const isLoadingRef = useRef(false);
 
   const sortedPosts = useMemo(() => {
     return [...filteredPosts].sort((a, b) => {
@@ -66,6 +73,50 @@ export default function PostsPage() {
       return 0;
     });
   }, [filteredPosts, sortOrder]);
+
+  // sortedPosts가 변경되면 loadedCount와 ref 초기화
+  useEffect(() => {
+    setLoadedCount(postSize);
+    loadedCountRef.current = postSize;
+    sortedLengthRef.current = sortedPosts.length;
+  }, [sortedPosts]);
+
+  // 표시할 게시물은 sortedPosts에서 직접 계산
+  const displayedPosts = sortedPosts.slice(0, loadedCount);
+
+  const loadMorePosts = () => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+
+    setLoadedCount((prev) => {
+      const next = prev + postSize;
+      loadedCountRef.current = next;
+      isLoadingRef.current = false;
+      return next;
+    });
+  };
+
+  const handleScroll = () => {
+    if (typeof window === "undefined") return;
+    if (isLoadingRef.current) return;
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+
+    const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+    if (atBottom && loadedCountRef.current < sortedLengthRef.current) {
+      loadMorePosts();
+    }
+  };
+
+  // Attach scroll listener once
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     if (posts.length === 0) {
@@ -118,6 +169,24 @@ export default function PostsPage() {
     }
   }, [selectedCategory, posts]);
 
+  const sortedPosts = useMemo(() => {
+    return [...filteredPosts].sort((a, b) => {
+      const dateA = dayjs(a.created_at).toDate();
+      const dateB = dayjs(b.created_at).toDate();
+
+      if (sortOrder === "new-sort") {
+        return dateB.getTime() - dateA.getTime();
+      } else if (sortOrder === "old-sort") {
+        return dateA.getTime() - dateB.getTime();
+      } else if (sortOrder === "max-view-sort") {
+        return (b.view_count ?? 0) - (a.view_count ?? 0);
+      } else if (sortOrder === "min-view-sort") {
+        return (a.view_count ?? 0) - (b.view_count ?? 0);
+      }
+      return 0;
+    });
+  }, [filteredPosts, sortOrder]); // 🔥 posts와 정렬 기준이 바뀔 때만 재계산
+
   return (
     <div className="p-container w-full flex flex-col flex-1 gap-4">
       <h2 className="text-2xl font-bold">게시물</h2>
@@ -139,16 +208,21 @@ export default function PostsPage() {
         </Select>
       </div>
 
-      {/* 게시글 목록 */}
-      {sortedPosts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
-          {sortedPosts.map((post) => {
-            const category = myCategories.find(
-              (cat) => cat.id === post.category_id
-            );
-            const imageUrl = category?.thumbnail;
-            const currentCategoryName = category?.name.toLowerCase();
-            const isBookmarked = bookmarks.includes(post.id);
+      {isPending ? (
+        <div className="w-full h-[386px] flex items-center justify-center">
+          <p className="text-gray-500 text-center">로딩 중...</p>
+        </div>
+      ) : (
+        <>
+          {displayedPosts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
+              {displayedPosts.map((post) => {
+                const category = myCategories.find(
+                  (cat) => cat.id === post.category_id
+                );
+                const imageUrl = category?.thumbnail;
+                const currentCategoryName = category?.name.toLowerCase();
+                const isBookmarked = bookmarks.includes(post.id);
 
             return (
               <Link
