@@ -207,7 +207,7 @@ export default function PostsPage() {
                   (cat) => cat.id === post.category_id
                 );
                 const imageUrl = category?.thumbnail;
-                const currentCategoryName = category?.name;
+                const currentCategoryName = category?.name.toLowerCase();
                 const isBookmarked = bookmarks.includes(post.id);
 
                 return (
