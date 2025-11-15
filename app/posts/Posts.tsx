@@ -1,12 +1,8 @@
 "use client";
 
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import {
-  PostState,
-  PostStateWithoutContents,
-  usePostStore,
-} from "@components/store/postStore";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { PostState, usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import CategoryButtons from "@components/components/CategoryButtons";
 import {
@@ -30,8 +26,6 @@ import {
 import { cn } from "@components/lib/utils";
 import { useSessionStore } from "@components/store/sessionStore";
 
-const postSize = 8;
-
 export default function PostsPage() {
   const { id } = useParams();
   const pathname = usePathname();
@@ -50,75 +44,7 @@ export default function PostsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filteredPosts, setFilteredPosts] = useState(posts);
   const [sortOrder, setSortOrder] = useState<string>("new-sort");
-  const [loadedCount, setLoadedCount] = useState(postSize); // 초기값을 postSize로
-  const [isPending, startTransition] = useTransition();
-
-  // Refs to avoid stale closures in scroll handler
-  const loadedCountRef = useRef(postSize);
-  const sortedLengthRef = useRef(0);
-  const isLoadingRef = useRef(false);
-
-  const sortedPosts = useMemo(() => {
-    return [...filteredPosts].sort((a, b) => {
-      const dateA = dayjs(a.created_at).toDate();
-      const dateB = dayjs(b.created_at).toDate();
-
-      if (sortOrder === "new-sort") {
-        return dateB.getTime() - dateA.getTime();
-      } else if (sortOrder === "old-sort") {
-        return dateA.getTime() - dateB.getTime();
-      } else if (sortOrder === "max-view-sort") {
-        return (b.view_count ?? 0) - (a.view_count ?? 0);
-      } else if (sortOrder === "min-view-sort") {
-        return (a.view_count ?? 0) - (b.view_count ?? 0);
-      }
-      return 0;
-    });
-  }, [filteredPosts, sortOrder]);
-
-  // sortedPosts가 변경되면 loadedCount와 ref 초기화
-  useEffect(() => {
-    setLoadedCount(postSize);
-    loadedCountRef.current = postSize;
-    sortedLengthRef.current = sortedPosts.length;
-  }, [sortedPosts]);
-
-  // 표시할 게시물은 sortedPosts에서 직접 계산
-  const displayedPosts = sortedPosts.slice(0, loadedCount);
-
-  const loadMorePosts = () => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-
-    setLoadedCount((prev) => {
-      const next = prev + postSize;
-      loadedCountRef.current = next;
-      isLoadingRef.current = false;
-      return next;
-    });
-  };
-
-  const handleScroll = () => {
-    if (typeof window === "undefined") return;
-    if (isLoadingRef.current) return;
-
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollHeight = document.documentElement.scrollHeight;
-    const clientHeight = window.innerHeight;
-
-    const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-    if (atBottom && loadedCountRef.current < sortedLengthRef.current) {
-      loadMorePosts();
-    }
-  };
-
-  // Attach scroll listener once
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  const [isPending, startTransition] = useTransition(); // ✅ 부드러운 전환을 위해 useTransition 사용
 
   useEffect(() => {
     if (posts.length === 0) {
@@ -173,6 +99,24 @@ export default function PostsPage() {
     }
   }, [selectedCategory, posts]);
 
+  const sortedPosts = useMemo(() => {
+    return [...filteredPosts].sort((a, b) => {
+      const dateA = dayjs(a.created_at).toDate();
+      const dateB = dayjs(b.created_at).toDate();
+
+      if (sortOrder === "new-sort") {
+        return dateB.getTime() - dateA.getTime();
+      } else if (sortOrder === "old-sort") {
+        return dateA.getTime() - dateB.getTime();
+      } else if (sortOrder === "max-view-sort") {
+        return (b.view_count ?? 0) - (a.view_count ?? 0);
+      } else if (sortOrder === "min-view-sort") {
+        return (a.view_count ?? 0) - (b.view_count ?? 0);
+      }
+      return 0;
+    });
+  }, [filteredPosts, sortOrder]); // 🔥 posts와 정렬 기준이 바뀔 때만 재계산
+
   return (
     <div className="p-container w-full flex flex-col flex-1 gap-4">
       <h2 className="text-2xl font-bold">게시물</h2>
@@ -200,9 +144,9 @@ export default function PostsPage() {
         </div>
       ) : (
         <>
-          {displayedPosts.length > 0 ? (
+          {sortedPosts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
-              {displayedPosts.map((post) => {
+              {sortedPosts.map((post) => {
                 const category = myCategories.find(
                   (cat) => cat.id === post.category_id
                 );
