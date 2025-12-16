@@ -62,6 +62,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
+        <link rel="icon" href="/logo.png" type="image/png" />
+
         {/* ✅ Highlight.js CSS (테마) */}
         <link
           rel="stylesheet"
@@ -75,13 +77,10 @@ export default function RootLayout({
           <Suspense fallback={<PageLoading />}>{children}</Suspense>
         </div>
         <Footer />
-
-        {/* ✅ Highlight.js Script (body 끝에 배치) */}
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
           strategy="afterInteractive"
         />
-        {/* ✅ 하이라이트 초기 실행 (DOM 하이드레이션 이후) */}
         <Script id="hljs-init" strategy="afterInteractive">{`
           if (typeof window !== 'undefined' && window.hljs) {
             window.hljs.highlightAll();
