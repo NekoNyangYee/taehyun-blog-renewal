@@ -18,7 +18,6 @@ export default function SearchBar() {
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLDivElement>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] = useState(0);
 
   // zustand store에서 데이터 구독
   const { posts, bookmarks, fetchPosts, fetchBookmarkPosts } = usePostStore();
@@ -133,69 +132,6 @@ export default function SearchBar() {
     }
   }, [session, fetchBookmarkPosts]);
 
-  // 결과 내용의 실제 높이 계산 (검색 결과가 바뀔 때마다)
-  useEffect(() => {
-    if (resultsContainerRef.current) {
-      if (
-        filteredPosts.length > 0 ||
-        filteredBookmarkedPosts.length > 0 ||
-        keyword.length > 0
-      ) {
-        const container = resultsContainerRef.current;
-
-        // 새로운 높이 측정
-        const scrollHeight = container.scrollHeight;
-        const newHeight = Math.min(scrollHeight, 650);
-
-        // 높이가 줄어드는 경우
-        if (newHeight < contentHeight) {
-          // 먼저 새 높이로 설정
-          setContentHeight(newHeight);
-          // 0.2초 뒤에 애니메이션으로 전환 (CSS transition 시작)
-          setTimeout(() => {
-            // 이미 설정된 높이이므로 추가 작업 없음
-          }, 200);
-        } else {
-          // 높이가 늘어나는 경우: 기존 로직 유지
-          setContentHeight(contentHeight);
-          setTimeout(() => {
-            const currentScrollHeight = container.scrollHeight;
-            const currentNewHeight = Math.min(currentScrollHeight, 650);
-            setContentHeight(currentNewHeight);
-          }, 50);
-        }
-      } else {
-        setContentHeight(0);
-      }
-    }
-  }, [
-    filteredPosts.length,
-    filteredBookmarkedPosts.length,
-    showAllPosts,
-    showAllBookmarks,
-    keyword,
-  ]);
-
-  // 화면 크기 변경 시 높이 재계산
-  useEffect(() => {
-    const handleResize = () => {
-      if (resultsContainerRef.current && isOpen && contentHeight > 0) {
-        const container = resultsContainerRef.current;
-        const scrollHeight = container.scrollHeight;
-        const newHeight = Math.min(scrollHeight, 650);
-        setContentHeight(newHeight);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("orientationchange", handleResize);
-    };
-  }, [isOpen, contentHeight]);
-
   const popup = (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
@@ -237,17 +173,7 @@ export default function SearchBar() {
           <div
             ref={resultsContainerRef}
             id="search-results-container"
-            className="overflow-y-auto scrollbar-hide transition-all duration-300"
-            style={{
-              maxHeight: `${Math.min(
-                contentHeight,
-                typeof window !== "undefined"
-                  ? window.innerHeight * 0.8 - 80
-                  : 650
-              )}px`,
-              opacity: contentHeight > 0 ? 1 : 0,
-              WebkitOverflowScrolling: "touch",
-            }}
+            className="overflow-y-auto scrollbar-hide max-h-[650px]"
           >
             {filteredPosts.length > 0 && (
               <div className="mb-4">
