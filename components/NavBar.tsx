@@ -18,7 +18,7 @@ import { supabase } from "@components/lib/supabaseClient";
 
 export default function NavBar() {
   const currentPath: string = usePathname();
-  const { myCategories, fetchCategories } = useCategoriesStore();
+  const { fetchCategories } = useCategoriesStore();
   const { session, isLoading, fetchSession, addSession } = useSessionStore();
   const router = useRouter();
 
