@@ -72,7 +72,7 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col h-screen">
         <Header />
-        <div className="flex flex-1 max-w-[90rem] box-border mx-auto w-full pt-[65px]">
+        <div className="flex flex-1  max-w-[90rem] box-border mx-auto w-full pt-[65px]">
           <NavBar />
           <Suspense fallback={<PageLoading />}>{children}</Suspense>
         </div>

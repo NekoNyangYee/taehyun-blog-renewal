@@ -34,6 +34,8 @@ import { Switch } from "@components/components/ui/switch";
 import { Textarea } from "@components/components/ui/textarea";
 import Image from "next/image";
 import { useUIStore } from "@components/store/postLoadingStore";
+import { lowerURL } from "@components/lib/util/lowerURL";
+import NotFound from "@components/app/not-found";
 
 interface Heading {
   id: string;
@@ -92,13 +94,14 @@ function RenderedContent({ html }: { html: string }) {
 
 export default function PostDetailPage() {
   const { posts, fetchPosts } = usePostStore();
-  const { myCategories } = useCategoriesStore();
+  const { myCategories, fetchCategories } = useCategoriesStore();
   const { session } = useSessionStore();
   const { comments, fetchComments, addComment, deleteComment } =
     useCommentStore();
   const pathname = usePathname();
   const router = useRouter();
-  const { id } = useParams();
+  const params = useParams();
+  const { id, category: urlCategory } = params;
 
   const [post, setPost] = useState<PostState | null>(null);
   const [headings, setHeadings] = useState<
@@ -114,29 +117,90 @@ export default function PostDetailPage() {
   const [replyContent, setReplyContent] = useState<string>("");
   const [isStatus, setIsStatus] = useState<boolean>(true);
   const [isReplyStatus, setIsReplyStatus] = useState<boolean>(true);
+  const [isNotFound, setIsNotFound] = useState<boolean>(false);
 
   const setPostLoading = useUIStore((state) => state.setPostLoading);
 
   useEffect(() => {
-    const fetchPost = async () => {
+    // 5초 타임아웃 설정 - 게시물 페이지용
+    const timeoutId = setTimeout(() => {
+      console.log("게시물 페이지 5초 타임아웃 - 404 표시");
+      setIsNotFound(true);
+      setLoading(false);
+      setPostLoading(false);
+    }, 5000);
+
+    const fetchPost = async (): Promise<boolean> => {
       setPostLoading(true);
       setLoading(true);
       const postId = pathname.split("/").pop();
 
+      if (!postId || !urlCategory) {
+        clearTimeout(timeoutId);
+        setPost(null);
+        setIsNotFound(true);
+        setLoading(false);
+        setPostLoading(false);
+        return false;
+      }
+
       // 게시물이 없으면 먼저 불러오기
       if (posts.length === 0) {
-        await fetchPosts(); // fetchPosts()가 끝날 때까지 기다림
+        await fetchPosts();
       }
 
-      // 최신 상태의 posts를 가져옴
+      // 카테고리가 없으면 먼저 불러오기
+      if (myCategories.length === 0) {
+        await fetchCategories();
+      }
+
+      // 최신 상태의 posts와 categories를 가져옴
       const updatedPosts = usePostStore.getState().posts;
+      const updatedCategories = useCategoriesStore.getState().myCategories;
       const selectedPost = updatedPosts.find((p) => String(p.id) === postId);
 
+      console.log("검증 시작:", { postId, selectedPost, updatedCategories });
+
+      // 1. 게시물이 posts 배열에 없으면 404 (비공개이거나 존재하지 않음)
       if (!selectedPost) {
+        console.log("게시물 없음 - 404");
+        clearTimeout(timeoutId);
+        setIsNotFound(true);
         setPost(null);
         setLoading(false);
-        return;
+        setPostLoading(false);
+        return false;
       }
+
+      // 2. 게시물의 카테고리와 URL 카테고리 비교
+      const postCategory = updatedCategories.find(
+        (cat) => cat.id === selectedPost.category_id
+      );
+
+      const decodedUrlCategory = decodeURIComponent(String(urlCategory));
+      console.log("카테고리 비교:", {
+        postCategory: postCategory?.name,
+        urlCategory: decodedUrlCategory,
+        postCategoryLower: postCategory ? lowerURL(postCategory.name) : null,
+        urlCategoryLower: lowerURL(decodedUrlCategory),
+      });
+
+      if (
+        !postCategory ||
+        lowerURL(postCategory.name) !== lowerURL(decodedUrlCategory)
+      ) {
+        console.log("카테고리 불일치 - 404");
+        clearTimeout(timeoutId);
+        setIsNotFound(true);
+        setPost(null);
+        setLoading(false);
+        setPostLoading(false);
+        return false;
+      }
+
+      console.log("검증 통과 - 정상 로딩");
+      clearTimeout(timeoutId);
+      setIsNotFound(false);
 
       // selectedPost may come from the posts list and omit the 'contents' field;
       // provide a safe fallback so the PostState type is satisfied until the full post is fetched.
@@ -168,15 +232,31 @@ export default function PostDetailPage() {
             setLoading(false);
             setPostLoading(false);
           }, 500);
+        } else {
+          setLoading(false);
+          setPostLoading(false);
         }
       } else {
         setLoading(false);
         setPostLoading(false);
       }
+
+      return true;
     };
 
-    fetchPost();
-    fetchComments(String(id));
+    const runFetch = async () => {
+      const success = await fetchPost();
+      // fetchPost에서 성공했을 때만 fetchComments 실행
+      if (success) {
+        fetchComments(String(id));
+      } else {
+        console.log("fetchPost 실패 - fetchComments 생략");
+      }
+    };
+
+    runFetch();
+
+    return () => clearTimeout(timeoutId);
   }, [pathname]); // hasIncremented 제거하여 의도치 않은 반복 실행 방지
 
   // 본문 내용이 실제로 바뀔 때만 목차 재계산 (좋아요로 인한 불필요한 재계산 방지)
@@ -268,6 +348,10 @@ export default function PostDetailPage() {
 
   const category = myCategories.find((cat) => cat.id === post?.category_id);
   const imageUrl = category?.thumbnail;
+
+  if (isNotFound) {
+    return <NotFound />;
+  }
 
   if (!post) {
     return <PageLoading />;
@@ -432,7 +516,19 @@ export default function PostDetailPage() {
     setReplyingTo((prev) => (prev === commentId ? null : commentId));
   };
 
-  if (loading) return <PageLoading />;
+  console.log("렌더링 시점:", { loading, isNotFound });
+
+  if (loading) {
+    console.log("PageLoading 렌더링");
+    return <PageLoading />;
+  }
+
+  if (isNotFound) {
+    console.log("NotFound 렌더링");
+    return <NotFound />;
+  }
+
+  console.log("메인 컴포넌트 렌더링");
 
   return (
     <div className="break-words whitespace-pre-wrap h-full w-full max-w-[1200px] mx-auto p-4">
