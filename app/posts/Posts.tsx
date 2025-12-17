@@ -29,9 +29,9 @@ import {
 } from "@components/components/ui/select";
 import { cn } from "@components/lib/utils";
 import { useSessionStore } from "@components/store/sessionStore";
+import { lowerURL } from "@components/lib/util/lowerURL";
 
 export default function PostsPage() {
-  const { id } = useParams();
   const pathname = usePathname();
   const { session } = useSessionStore();
   const userId = session?.user?.id;
@@ -147,7 +147,7 @@ export default function PostsPage() {
               (cat) => cat.id === post.category_id
             );
             const imageUrl = category?.thumbnail;
-            const currentCategoryName = category?.name.toLowerCase();
+            const currentCategoryName = lowerURL(category?.name || "");
             const isBookmarked = bookmarks.includes(post.id);
 
             return (
