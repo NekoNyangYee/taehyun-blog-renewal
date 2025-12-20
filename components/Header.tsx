@@ -52,7 +52,7 @@ export default function Header() {
   return (
     <>
       <div className="w-full border-b border-containerColor fixed top-0 bg-white/70 backdrop-blur-md z-20">
-        <div className="max-w-[90rem] mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8 h-[65px]">
+        <div className="max-w-[90rem] mx-auto flex justify-between items-center max-2xl:px-4 h-[65px]">
           <Link href="/">
             <LogoIcon />
           </Link>
