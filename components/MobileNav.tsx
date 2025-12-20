@@ -11,6 +11,7 @@ import {
   HandIcon,
   StarIcon,
   XIcon,
+  UserRoundCog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -115,7 +116,7 @@ export default function MobileNavBar({
         >
           <XIcon size={24} />
         </button>
-        <div className="p-container w-full flex flex-col">
+        <div className="p-container w-full flex flex-col overflow-auto scrollbar-hide">
           <Link
             href={"/"}
             className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
@@ -148,6 +149,16 @@ export default function MobileNavBar({
               <span className="truncate">북마크</span>
             </Link>
           )}
+          <Link
+            href={"/myinfo"}
+            className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
+              "/myinfo"
+            )}`}
+            onClick={handleClose}
+          >
+            <UserRoundCog size={18} />
+            <span className="truncate">내 정보</span>
+          </Link>
           <Link
             href={"/profile"}
             className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
