@@ -123,6 +123,7 @@ export default function CategoryPage({
                     );
                     const imageUrl = category?.thumbnail;
                     const currentCategoryName = category?.name.toLowerCase();
+                    const categoryName = category?.name || "미분류";
                     const isBookmarked = bookmarks.includes(post.id);
 
                     return (
@@ -130,73 +131,75 @@ export default function CategoryPage({
                         key={post.id}
                         href={`/posts/${currentCategoryName}/${post.id}`}
                       >
-                        <div
-                          key={post.id}
-                          className="rounded-lg shadow-lg border border-containerColor overflow-hidden flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1"
-                        >
-                          <div className="flex items-center justify-center object-cover w-auto lg:h-44 md:h-48 bg-gray-800">
-                            <img
-                              src={imageUrl}
-                              alt="Post Thumbnail"
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-2 p-container">
-                            <div className="flex flex-col gap-2">
-                              <h2 className="text-lg font-bold truncate">
-                                {post.title}
-                              </h2>
-                              <p className="text-sm text-metricsText">
-                                by {post.author_name}
-                              </p>
-                              <p className="text-sm text-metricsText">
-                                {formatDate(post.created_at)}
-                              </p>
-                            </div>
-                            <div className="flex justify-between pt-container">
-                              <div className="flex gap-4 text-[14px]">
-                                <div className="flex gap-2 items-center text-metricsText">
-                                  <EyeIcon size={14} />
-                                  {post.view_count}
-                                </div>
-                                <div className="flex gap-2 items-center text-metricsText">
-                                  <HeartIcon size={14} />
-                                  {post.like_count}
-                                </div>
-                                <div className="flex gap-2 items-center text-metricsText">
-                                  <MessageSquareTextIcon size={14} />
-                                  {
-                                    comments.filter(
-                                      (comment) => comment.post_id === post.id
-                                    ).length
-                                  }
-                                </div>
+                        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-containerColor/70 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+                          <div className="relative h-40 w-full bg-gray-100">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt="Post Thumbnail"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-metricsText">
+                                이미지 없음
                               </div>
+                            )}
+                          </div>
+                          <div className="flex flex-1 flex-col gap-3 p-5">
+                            <div className="flex items-center justify-between">
+                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                                {categoryName}
+                              </span>
                               {session && (
-                                <div className="flex gap-2 items-center text-metricsText">
-                                  <BookmarkIcon
-                                    size={18}
-                                    className={cn(
-                                      isBookmarked
-                                        ? "fill-yellow-500 stroke-none"
-                                        : "fill-none"
-                                    )}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      if (!userId) {
-                                        alert("로그인이 필요합니다.");
-                                        return;
-                                      }
-                                      isBookmarked
-                                        ? removeBookmark(userId, post.id)
-                                        : addBookmark(userId, post.id);
-                                    }}
-                                  />
-                                </div>
+                                <BookmarkIcon
+                                  size={18}
+                                  className={cn(
+                                    isBookmarked
+                                      ? "fill-yellow-500 stroke-none"
+                                      : "fill-none"
+                                  )}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (!userId) {
+                                      alert("로그인이 필요합니다.");
+                                      return;
+                                    }
+                                    isBookmarked
+                                      ? removeBookmark(userId, post.id)
+                                      : addBookmark(userId, post.id);
+                                  }}
+                                />
                               )}
                             </div>
+                            <h3 className="truncate text-lg font-semibold leading-tight text-gray-900">
+                              {post.title}
+                            </h3>
+                            <p className="text-sm text-metricsText">
+                              by {post.author_name}
+                            </p>
+                            <p className="text-sm text-metricsText">
+                              {formatDate(post.created_at)}
+                            </p>
+                            <div className="mt-auto flex items-center gap-4 pt-3 text-sm text-metricsText">
+                              <span className="flex items-center gap-1">
+                                <EyeIcon size={16} />
+                                {post.view_count}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <HeartIcon size={16} />
+                                {post.like_count}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquareTextIcon size={16} />
+                                {
+                                  comments.filter(
+                                    (comment) => comment.post_id === post.id
+                                  ).length
+                                }
+                              </span>
+                            </div>
                           </div>
-                        </div>
+                        </article>
                       </Link>
                     );
                   })

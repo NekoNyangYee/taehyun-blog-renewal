@@ -2,18 +2,18 @@
 
 import { supabase } from "@components/lib/supabaseClient";
 import { useSessionStore } from "@components/store/sessionStore";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { MenuIcon, ArrowLeft } from "lucide-react";
 import LogoIcon from "./icons/LogoIcon";
+import { MenuIcon, XIcon } from "lucide-react";
 import MobileNavBar from "./MobileNav";
 import ScrollProgressBar from "./ScrollProgressBar";
 import SearchBar from "./SearchBar";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const currentPath = usePathname();
+  const currentPath: string = usePathname();
   const { addSession } = useSessionStore();
   const [isMobileNavVisible, setMobileNavVisible] = useState(false);
 
@@ -25,12 +25,15 @@ export default function Header() {
     const fetchSession = async () => {
       const { data, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("세션 가져오기 에러:", error);
-        return;
+      if (data.session) {
+        addSession(data.session);
+      } else {
+        addSession(null);
       }
 
-      addSession(data.session || null);
+      if (error) {
+        console.log(error);
+      }
     };
 
     const handleResize = () => {
@@ -42,14 +45,14 @@ export default function Header() {
     fetchSession();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [addSession]);
+  }, []);
 
   if (currentPath === "/login") return null;
 
   return (
     <>
       <div className="w-full border-b border-containerColor fixed top-0 bg-white/70 backdrop-blur-md z-20">
-        <div className="max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8 h-[65px]">
+        <div className="max-w-[90rem] mx-auto flex justify-between items-center max-2xl:px-4 h-[65px]">
           <Link href="/">
             <LogoIcon />
           </Link>

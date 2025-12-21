@@ -10,6 +10,7 @@ import {
   LogInIcon,
   HandIcon,
   StarIcon,
+  UserRoundCog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -75,6 +76,15 @@ export default function NavBar() {
                   <span className="truncate">북마크</span>
                 </Link>
               )}
+              <Link
+                href={"/myinfo"}
+                className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
+                  "/myinfo"
+                )}`}
+              >
+                <UserRoundCog size={18} />
+                <span className="truncate">내 정보</span>
+              </Link>
               <Link
                 href={"/profile"}
                 className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
