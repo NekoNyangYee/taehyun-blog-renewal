@@ -7,6 +7,14 @@ const withPWA = require("next-pwa")({
 /** @type {import('next').NextConfig} */
 const nextConfig = withPWA({
   reactStrictMode: true,
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? {
+            exclude: ["error", "warn"],
+          }
+        : false,
+  },
   images: {
     domains: ["lh3.googleusercontent.com", "k.kakaocdn.net"], // 외부 이미지 도메인 추가
   },
