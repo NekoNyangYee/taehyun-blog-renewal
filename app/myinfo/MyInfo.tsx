@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSessionStore } from "@components/store/sessionStore";
 import { formatDate } from "@components/lib/util/dayjs";
@@ -12,14 +12,19 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookmarkIcon,
   CalendarIcon,
+  CheckCheck,
+  CircleAlert,
   ClockIcon,
   EyeIcon,
   HeartIcon,
   LogInIcon,
   MessageSquareTextIcon,
+  PencilIcon,
   ShieldCheckIcon,
   UsersIcon,
+  X,
 } from "lucide-react";
+import { useProfileStore } from "@components/store/profileStore";
 
 const PROVIDER_LABEL: Record<string, string> = {
   kakao: "카카오",
@@ -33,12 +38,29 @@ export default function MyInfoPage() {
   const { posts, fetchPosts } = usePostStore();
   const { myCategories, fetchCategories } = useCategoriesStore();
   const { comments, fetchComments } = useCommentStore();
+  const { profiles, fetchProfiles, updateProfile } = useProfileStore();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newBannerUrl, setNewBannerUrl] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (!session) {
       fetchSession();
     }
   }, [session, fetchSession]);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, [profiles]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [isModalOpen]);
 
   useEffect(() => {
     fetchPosts();
@@ -103,11 +125,6 @@ export default function MyInfoPage() {
         value: profile.sessionExpiresAt,
         icon: ShieldCheckIcon,
       },
-      {
-        label: "Audience",
-        value: profile.audience,
-        icon: UsersIcon,
-      },
     ];
 
     return items.filter((item) => item.value && item.value !== "-");
@@ -168,15 +185,55 @@ export default function MyInfoPage() {
     );
   }
 
+  const httpRegExp = /^https:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i;
+
+  const updateProfileBanner = async () => {
+    if (!httpRegExp.test(newBannerUrl)) {
+      alert(
+        "유효한 이미지 URL을 입력해주세요. (https://로 시작하는 jpg, png, gif 등)"
+      );
+      return;
+    }
+    setIsUpdating(true);
+    await updateProfile({ profile_banner: newBannerUrl });
+    setIsModalOpen(false);
+    setNewBannerUrl("");
+    setIsUpdating(false);
+  };
+
+  const cancelUpdateBanner = () => {
+    if (newBannerUrl || newBannerUrl === profiles[0]?.profile_banner) {
+      const confirmCancel = window.confirm(
+        "변경 사항이 저장되지 않습니다. 정말 취소하시겠습니까?"
+      );
+      if (!confirmCancel) return;
+    }
+    setIsModalOpen(false);
+    setNewBannerUrl("");
+  };
+
   return (
     <section className="flex w-full flex-col">
       <header className="relative flex w-full flex-col items-center overflow-hidden border-y border-containerColor bg-white">
         <div className="relative h-36 sm:h-44 md:h-52 w-full overflow-hidden">
           <div
-            className="absolute inset-0 scale-110 transform bg-cover bg-center blur-lg"
-            style={{ backgroundImage: `url(${profile.avatar})` }}
+            className="absolute inset-0 scale-110 transform bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${
+                profiles[0]?.profile_banner
+                  ? profiles[0]?.profile_banner
+                  : "default.png"
+              })`,
+            }}
           />
           <div className="absolute inset-0 bg-white/25" />
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-button border border-white/50 bg-black/50 px-3 py-2 text-sm text-white backdrop-blur-sm transition hover:bg-black/70"
+          >
+            <PencilIcon size={16} />
+            배너 수정
+          </button>
         </div>
         <div className="relative z-10 -mt-14 sm:-mt-16 md:-mt-20 flex flex-col items-center gap-5 sm:gap-6 px-3 sm:px-4 pb-8 md:pb-10 text-center">
           <img
@@ -191,6 +248,21 @@ export default function MyInfoPage() {
             <p className="text-sm sm:text-base text-metricsText">
               {profile.email}
             </p>
+            <div
+              className={`flex gap-2 items-center text-sm text-metricsText ${
+                profile.audience ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {profile.audience ? (
+                <CheckCheck size={16} />
+              ) : (
+                <CircleAlert size={16} />
+              )}
+              <p>
+                해당 계정은 TaeHyun's Devlog의{" "}
+                {profile.audience ? "인증" : "미인증"}된 계정입니다.
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -341,6 +413,78 @@ export default function MyInfoPage() {
           </section>
         </div>
       </div>
+
+      {/* 배너 수정 모달 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl rounded-2xl border border-containerColor bg-white p-6 shadow-xl">
+            <h2 className="mb-6 text-2xl font-semibold">프로필 배너 수정</h2>
+            <div className="space-y-6">
+              <div className="flex flex-col gap-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  현재 배너 이미지
+                </label>
+                <div className="h-40 w-full overflow-hidden rounded-lg border border-containerColor">
+                  <img
+                    src={
+                      newBannerUrl ||
+                      profiles[0]?.profile_banner ||
+                      "default.png"
+                    }
+                    alt="현재 배너"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="bannerUrl"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  새 배너 이미지 URL
+                </label>
+                <input
+                  id="bannerUrl"
+                  type="text"
+                  value={newBannerUrl}
+                  onChange={(e) => setNewBannerUrl(e.target.value)}
+                  placeholder="이미지 URL을 입력하세요"
+                  disabled={isUpdating}
+                  className={`w-full rounded-lg border border-containerColor px-4 py-2.5 text-sm outline-none transition focus:border-black focus:ring-2 focus:ring-black/5 ${
+                    isUpdating ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    cancelUpdateBanner();
+                  }}
+                  disabled={isUpdating}
+                  className={`rounded-button border border-containerColor bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 ${
+                    isUpdating ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    updateProfileBanner();
+                  }}
+                  disabled={!newBannerUrl || isUpdating}
+                  className={`rounded-button bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 ${
+                    isUpdating ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                >
+                  {isUpdating ? "변경 중..." : "배너 변경"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

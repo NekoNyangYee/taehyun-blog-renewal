@@ -17,8 +17,6 @@ export async function validatePostCategory(
   postId: string
 ): Promise<ValidationResult> {
   try {
-    console.log("검증 시작:", { categoryParam, postId });
-
     const decodedCategory = decodeURIComponent(categoryParam);
     const normalizedUrlCategory = lowerURL(decodedCategory);
 
