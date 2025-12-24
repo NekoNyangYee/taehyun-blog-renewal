@@ -608,7 +608,10 @@ export default function PostDetailPage() {
       <div className="flex flex-col md:flex-row gap-4 w-full my-4">
         {previousPage && (
           <Link
-            href={`/posts/${category?.name}/${previousPage.id}`}
+            href={`/posts/${lowerURL(
+              myCategories.find((cat) => cat.id === previousPage.category_id)
+                ?.name || lowerURL(category?.name || "")
+            )}/${previousPage.id}`}
             className="bg-searchInput p-container rounded-container flex-1 w-full max-w-full md:max-w-[50%] border border-gray-300"
           >
             <div className="flex gap-4 items-center justify-between">
@@ -624,7 +627,10 @@ export default function PostDetailPage() {
         )}
         {nextPage && (
           <Link
-            href={`/posts/${category?.name}/${nextPage.id}`}
+            href={`/posts/${lowerURL(
+              myCategories.find((cat) => cat.id === nextPage.category_id)
+                ?.name || lowerURL(category?.name || "")
+            )}/${nextPage.id}`}
             className="bg-searchInput p-container rounded-container flex-1 w-full max-w-full md:max-w-[50%] border border-gray-300"
           >
             <div className="flex gap-4 items-center justify-between">
