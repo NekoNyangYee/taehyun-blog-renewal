@@ -1,8 +1,10 @@
+import { MousePointerSquareDashed } from "lucide-react";
 import Link from "next/link";
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-[60vh] gap-6 p-container">
+      <MousePointerSquareDashed size={64} className="text-gray-400" />
       <h1 className="text-6xl font-bold text-gray-800">404</h1>
       <h2 className="text-2xl font-semibold text-gray-600">
         페이지를 찾을 수 없습니다

@@ -17,6 +17,7 @@ import {
   ClockIcon,
   EyeIcon,
   HeartIcon,
+  LockIcon,
   LogInIcon,
   MessageSquareTextIcon,
   PencilIcon,
@@ -43,6 +44,8 @@ export default function MyInfoPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newBannerUrl, setNewBannerUrl] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (!session) {
@@ -53,14 +56,6 @@ export default function MyInfoPage() {
   useEffect(() => {
     fetchProfiles();
   }, [profiles]);
-
-  useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [isModalOpen]);
 
   useEffect(() => {
     fetchPosts();
@@ -170,7 +165,8 @@ export default function MyInfoPage() {
 
   if (!profile) {
     return (
-      <section className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+      <section className="flex w-full min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <LockIcon size={48} className="text-metricsText" />
         <p className="text-lg font-semibold">로그인이 필요합니다.</p>
         <p className="text-sm text-metricsText">
           내 정보 페이지는 로그인 후 이용할 수 있어요.
@@ -196,9 +192,9 @@ export default function MyInfoPage() {
     }
     setIsUpdating(true);
     await updateProfile({ profile_banner: newBannerUrl });
-    setIsModalOpen(false);
     setNewBannerUrl("");
     setIsUpdating(false);
+    closeModal();
   };
 
   const cancelUpdateBanner = () => {
@@ -208,16 +204,45 @@ export default function MyInfoPage() {
       );
       if (!confirmCancel) return;
     }
-    setIsModalOpen(false);
     setNewBannerUrl("");
+    closeModal();
   };
+
+  const bannerModalOpen = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsAnimating(false);
+    setTimeout(() => {
+      setIsModalOpen(false);
+    }, 300);
+  };
+
+  useEffect(() => {
+    if (isModalOpen) {
+      setIsVisible(true);
+      document.body.style.overflow = "hidden";
+      const timer = setTimeout(() => {
+        setIsAnimating(true);
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+
+    document.body.style.overflow = "auto";
+    if (isVisible) {
+      setIsAnimating(false);
+      const timer = setTimeout(() => setIsVisible(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isModalOpen, isVisible]);
 
   return (
     <section className="flex w-full flex-col">
       <header className="relative flex w-full flex-col items-center overflow-hidden border-y border-containerColor bg-white">
-        <div className="relative h-36 sm:h-44 md:h-52 w-full overflow-hidden">
+        <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 w-full overflow-hidden">
           <div
-            className="absolute inset-0 scale-110 transform bg-cover bg-center"
+            className="absolute h-full inset-0 transform bg-cover bg-center"
             style={{
               backgroundImage: `url(${
                 profiles[0]?.profile_banner
@@ -228,7 +253,7 @@ export default function MyInfoPage() {
           />
           <div className="absolute inset-0 bg-white/25" />
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={bannerModalOpen}
             className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-button border border-white/50 bg-black/50 px-3 py-2 text-sm text-white backdrop-blur-sm transition hover:bg-black/70"
           >
             <PencilIcon size={16} />
@@ -415,76 +440,88 @@ export default function MyInfoPage() {
       </div>
 
       {/* 배너 수정 모달 */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl rounded-2xl border border-containerColor bg-white p-6 shadow-xl">
-            <h2 className="mb-6 text-2xl font-semibold">프로필 배너 수정</h2>
-            <div className="space-y-6">
-              <div className="flex flex-col gap-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  현재 배너 이미지
-                </label>
-                <div className="h-40 w-full overflow-hidden rounded-lg border border-containerColor">
-                  <img
-                    src={
-                      newBannerUrl ||
-                      profiles[0]?.profile_banner ||
-                      "default.png"
-                    }
-                    alt="현재 배너"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="bannerUrl"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  새 배너 이미지 URL
-                </label>
-                <input
-                  id="bannerUrl"
-                  type="text"
-                  value={newBannerUrl}
-                  onChange={(e) => setNewBannerUrl(e.target.value)}
-                  placeholder="이미지 URL을 입력하세요"
-                  disabled={isUpdating}
-                  className={`w-full rounded-lg border border-containerColor px-4 py-2.5 text-sm outline-none transition focus:border-black focus:ring-2 focus:ring-black/5 ${
-                    isUpdating ? "cursor-not-allowed opacity-50" : ""
-                  }`}
+      <div
+        onClick={cancelUpdateBanner}
+        style={{ willChange: isModalOpen ? "opacity" : "auto" }}
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-all duration-300 ease-out ${
+          isModalOpen && isAnimating
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ willChange: isModalOpen ? "transform, opacity" : "auto" }}
+          className={`relative w-full max-w-2xl rounded-2xl border border-containerColor bg-white p-6 shadow-xl transition-all duration-300 ease-out ${
+            isModalOpen && isAnimating
+              ? "scale-100 opacity-100"
+              : "scale-95 opacity-0"
+          }`}
+        >
+          <h2 className="mb-6 text-2xl font-semibold">프로필 배너 수정</h2>
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <label className="block text-sm font-medium text-gray-700">
+                현재 배너 이미지
+              </label>
+              <div className="h-40 w-full overflow-hidden rounded-lg border border-containerColor">
+                <img
+                  src={
+                    newBannerUrl || profiles[0]?.profile_banner || "default.png"
+                  }
+                  alt="현재 배너"
+                  className="h-full w-full object-cover"
                 />
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    cancelUpdateBanner();
-                  }}
-                  disabled={isUpdating}
-                  className={`rounded-button border border-containerColor bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 ${
-                    isUpdating ? "cursor-not-allowed opacity-50" : ""
-                  }`}
-                >
-                  취소
-                </button>
-                <button
-                  onClick={() => {
-                    updateProfileBanner();
-                  }}
-                  disabled={!newBannerUrl || isUpdating}
-                  className={`rounded-button bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 ${
-                    isUpdating ? "cursor-not-allowed opacity-50" : ""
-                  }`}
-                >
-                  {isUpdating ? "변경 중..." : "배너 변경"}
-                </button>
-              </div>
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="bannerUrl"
+                className="block text-sm font-medium text-gray-700"
+              >
+                새 배너 이미지 URL
+              </label>
+              <input
+                id="bannerUrl"
+                type="text"
+                value={newBannerUrl}
+                onChange={(e) => setNewBannerUrl(e.target.value)}
+                placeholder="이미지 URL을 입력하세요"
+                disabled={isUpdating}
+                className={`w-full rounded-lg border border-containerColor px-4 py-2.5 text-sm outline-none transition focus:border-black focus:ring-2 focus:ring-black/5 ${
+                  isUpdating ? "cursor-not-allowed opacity-50" : ""
+                }`}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  cancelUpdateBanner();
+                }}
+                disabled={isUpdating}
+                className={`rounded-button border border-containerColor bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 ${
+                  isUpdating ? "cursor-not-allowed opacity-50" : ""
+                }`}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  updateProfileBanner();
+                }}
+                disabled={!newBannerUrl || isUpdating}
+                className={`rounded-button bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 ${
+                  isUpdating ? "cursor-not-allowed opacity-50" : ""
+                }`}
+              >
+                {isUpdating ? "변경 중..." : "배너 변경"}
+              </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </section>
   );
 }

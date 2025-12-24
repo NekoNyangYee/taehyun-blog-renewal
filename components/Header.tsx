@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import LogoIcon from "./icons/LogoIcon";
-import { MenuIcon, XIcon } from "lucide-react";
+import { MenuIcon, PanelLeftOpen, XIcon } from "lucide-react";
 import MobileNavBar from "./MobileNav";
 import ScrollProgressBar from "./ScrollProgressBar";
 import SearchBar from "./SearchBar";
@@ -52,10 +52,13 @@ export default function Header() {
   return (
     <>
       <div className="w-full border-b border-containerColor fixed top-0 bg-white/70 backdrop-blur-md z-20">
-        <div className="max-w-[90rem] mx-auto flex justify-between items-center max-2xl:px-4 h-[65px]">
-          <Link href="/">
+        <div className="max-w-[90rem] mx-auto flex justify-between items-center max-2xl:px-4 h-[65px] 2xl:overflow-hidden">
+          <Link href="/" className="max-2xl:hidden">
             <LogoIcon />
           </Link>
+          <button onClick={toggleMobileNav} className="2xl:hidden">
+            <PanelLeftOpen size={24} />
+          </button>
           <div className="flex items-center gap-2">
             <Link
               href="https://github.com/NekoNyangYee"
@@ -65,9 +68,6 @@ export default function Header() {
               <Image src="/github.svg" alt="GitHub" width={32} height={32} />
             </Link>
             <SearchBar />
-            <button onClick={toggleMobileNav} className="2xl:hidden">
-              <MenuIcon size={24} />
-            </button>
           </div>
         </div>
       </div>
