@@ -12,6 +12,7 @@ import {
   StarIcon,
   XIcon,
   UserRoundCog,
+  PanelLeftClose,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -114,7 +115,7 @@ export default function MobileNavBar({
           onClick={handleClose}
           className="absolute top-0 right-0 m-4 bg-white shadow-none rounded-full"
         >
-          <XIcon size={24} />
+          <PanelLeftClose size={24} />
         </button>
         <div className="p-container w-full flex flex-col overflow-auto scrollbar-hide">
           <Link
