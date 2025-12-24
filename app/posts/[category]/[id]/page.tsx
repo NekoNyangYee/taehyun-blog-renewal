@@ -36,6 +36,7 @@ import Image from "next/image";
 import { useUIStore } from "@components/store/postLoadingStore";
 import { lowerURL } from "@components/lib/util/lowerURL";
 import NotFound from "@components/app/not-found";
+import { useProfileStore } from "@components/store/profileStore";
 
 interface Heading {
   id: string;
@@ -98,6 +99,7 @@ export default function PostDetailPage() {
   const { session } = useSessionStore();
   const { comments, fetchComments, addComment, deleteComment } =
     useCommentStore();
+  const { profiles, fetchProfiles } = useProfileStore();
   const pathname = usePathname();
   const router = useRouter();
   const params = useParams();
@@ -153,7 +155,7 @@ export default function PostDetailPage() {
       if (myCategories.length === 0) {
         await fetchCategories();
       }
-
+      fetchProfiles();
       // 최신 상태의 posts와 categories를 가져옴
       const updatedPosts = usePostStore.getState().posts;
       const updatedCategories = useCategoriesStore.getState().myCategories;
@@ -657,6 +659,33 @@ export default function PostDetailPage() {
           {post?.like_count}
         </Button>
       </div>
+      <Link href="/profile">
+        <div className="flex items-center justify-between gap-4 py-6 border-t border-slate-containerColor mt-4 hover:cursor-pointer">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-full overflow-hidden shadow-md flex-shrink-0">
+              <Image
+                src={
+                  profiles.find((profile) => profile.id === post?.author_id)
+                    ?.profile_image || "/default-profile.png"
+                }
+                alt="작성자 프로필"
+                width={80}
+                height={80}
+                className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-metricsText tracking-wider">
+                Front-End Developer
+              </span>
+              <p className="text-lg font-bold text-gray-900">
+                {profiles.find((profile) => profile.id === post?.author_id)
+                  ?.nickname || "작성자"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Link>
       <div className="flex flex-col gap-4 py-4">
         <div className="flex justify-between items-center">
           <span className="font-bold">{comments.length}개의 댓글</span>
