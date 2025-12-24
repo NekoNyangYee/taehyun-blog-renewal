@@ -20,29 +20,14 @@ interface ProfileProps {
 export const useProfileStore = create<ProfileProps>((set, get) => ({
   profiles: [],
   fetchProfiles: async () => {
-    // 현재 로그인된 사용자 정보 가져오기
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.error("로그인된 사용자가 없습니다");
-      return;
-    }
-
-    // 로그인된 사용자의 프로필만 조회
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    const { data, error } = await supabase.from("profiles").select("*");
 
     if (error) {
       console.error("프로필 가져오기 에러:", error);
       return;
     }
     if (data) {
-      set({ profiles: [data] });
+      set({ profiles: data });
     }
   },
   updateProfile: async (profileData: Partial<Profile>) => {
