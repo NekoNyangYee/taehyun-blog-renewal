@@ -37,6 +37,7 @@ import { useUIStore } from "@components/store/postLoadingStore";
 import { lowerURL } from "@components/lib/util/lowerURL";
 import NotFound from "@components/app/not-found";
 import { useProfileStore } from "@components/store/profileStore";
+import { GotoTop } from "@components/components/GoToTop";
 
 interface Heading {
   id: string;
@@ -672,7 +673,7 @@ export default function PostDetailPage() {
               <Image
                 src={
                   profiles.find((profile) => profile.id === post?.author_id)
-                    ?.profile_image || "/default-profile.png"
+                    ?.profile_image || "/default.png"
                 }
                 alt="작성자 프로필"
                 width={80}
@@ -682,11 +683,11 @@ export default function PostDetailPage() {
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-metricsText tracking-wider">
-                Front-End Developer
+                작성자
               </span>
               <p className="text-lg font-bold text-gray-900">
                 {profiles.find((profile) => profile.id === post?.author_id)
-                  ?.nickname || "작성자"}
+                  ?.nickname || "(알 수 없음)"}
               </p>
             </div>
           </div>
@@ -751,7 +752,7 @@ export default function PostDetailPage() {
                       src={
                         comment.profile_image
                           ? decodeURIComponent(comment.profile_image)
-                          : "/default-profile.png"
+                          : "/default.png"
                       }
                       alt="profile"
                       width={40}
@@ -857,7 +858,7 @@ export default function PostDetailPage() {
                               src={
                                 reply.profile_image
                                   ? decodeURIComponent(reply.profile_image)
-                                  : "/default-profile.png"
+                                  : "/default.png"
                               }
                               alt="profile"
                               width={40}
@@ -927,6 +928,7 @@ export default function PostDetailPage() {
           </p>
         </div>
       )}
+      <GotoTop />
     </div>
   );
 }

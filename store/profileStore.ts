@@ -15,20 +15,36 @@ interface ProfileProps {
   profiles: Profile[];
   fetchProfiles: () => Promise<void>;
   updateProfile: (profileData: Partial<Profile>) => Promise<void>;
+  checkAdminStatus?: (userId: string) => Promise<boolean>;
 }
 
 export const useProfileStore = create<ProfileProps>((set, get) => ({
   profiles: [],
   fetchProfiles: async () => {
-    const { data, error } = await supabase.from("profiles").select("*");
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("로그인된 사용자가 없습니다", userError);
+      set({ profiles: [] });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
     if (error) {
       console.error("프로필 가져오기 에러:", error);
+      set({ profiles: [] });
       return;
     }
-    if (data) {
-      set({ profiles: data });
-    }
+
+    set({ profiles: data ? [data] : [] });
   },
   updateProfile: async (profileData: Partial<Profile>) => {
     const {
