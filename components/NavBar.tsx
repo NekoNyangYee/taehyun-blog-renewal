@@ -100,8 +100,7 @@ export default function NavBar() {
                 <div className="flex gap-2 mb-4">
                   <img
                     src={
-                      session?.user?.user_metadata?.avatar_url ||
-                      "/default-profile.png"
+                      session?.user?.user_metadata?.avatar_url || "/default.png"
                     }
                     alt="Profile Picture"
                     className="w-10 h-10 rounded-full"

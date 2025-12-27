@@ -22,6 +22,7 @@ import {
   MessageSquareTextIcon,
   PencilIcon,
   ShieldCheckIcon,
+  UserCheckIcon,
   UsersIcon,
   X,
 } from "lucide-react";
@@ -54,8 +55,27 @@ export default function MyInfoPage() {
   }, [session, fetchSession]);
 
   useEffect(() => {
+    if (isModalOpen) {
+      setIsVisible(true);
+      document.body.style.overflow = "hidden";
+      const timer = setTimeout(() => {
+        setIsAnimating(true);
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+
+    document.body.style.overflow = "auto";
+    if (isVisible) {
+      setIsAnimating(false);
+      const timer = setTimeout(() => setIsVisible(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isModalOpen, isVisible]);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
     fetchProfiles();
-  }, [profiles]);
+  }, [session?.user?.id, fetchProfiles]);
 
   useEffect(() => {
     fetchPosts();
@@ -74,7 +94,7 @@ export default function MyInfoPage() {
     return {
       avatar:
         (user.user_metadata as { avatar_url?: string })?.avatar_url ||
-        "/default-profile.png",
+        "/default.png",
       name:
         (user.user_metadata as { name?: string; full_name?: string })?.name ||
         (user.user_metadata as { full_name?: string })?.full_name ||
@@ -219,24 +239,6 @@ export default function MyInfoPage() {
     }, 300);
   };
 
-  useEffect(() => {
-    if (isModalOpen) {
-      setIsVisible(true);
-      document.body.style.overflow = "hidden";
-      const timer = setTimeout(() => {
-        setIsAnimating(true);
-      }, 10);
-      return () => clearTimeout(timer);
-    }
-
-    document.body.style.overflow = "auto";
-    if (isVisible) {
-      setIsAnimating(false);
-      const timer = setTimeout(() => setIsVisible(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isModalOpen, isVisible]);
-
   return (
     <section className="flex w-full flex-col">
       <header className="relative flex w-full flex-col items-center overflow-hidden border-y border-containerColor bg-white">
@@ -247,7 +249,7 @@ export default function MyInfoPage() {
               backgroundImage: `url(${
                 profiles[0]?.profile_banner
                   ? profiles[0]?.profile_banner
-                  : "default.png"
+                  : "/default.png"
               })`,
             }}
           />
@@ -261,32 +263,41 @@ export default function MyInfoPage() {
           </button>
         </div>
         <div className="relative z-10 -mt-14 sm:-mt-16 md:-mt-20 flex flex-col items-center gap-5 sm:gap-6 px-3 sm:px-4 pb-8 md:pb-10 text-center">
-          <img
-            src={profile.avatar}
-            alt="프로필 이미지"
-            className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full border-4 border-white shadow-xl object-cover"
-          />
+          <div className="relative">
+            <img
+              src={profile.avatar}
+              alt="프로필 이미지"
+              className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full border-4 border-white shadow-xl object-cover"
+            />
+            {profiles.find((profile) => profile.is_admin) && (
+              <div className="absolute bottom-0 right-0 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#0075FF] shadow-lg">
+                <UserCheckIcon size={20} className="text-white" />
+              </div>
+            )}
+          </div>
           <div className="flex flex-col items-center gap-1.5">
-            <h1 className="text-2xl sm:text-3xl font-semibold leading-tight">
+            <h1 className="flex items-center gap-3 text-2xl sm:text-3xl font-semibold leading-tight flex-wrap">
               {profile.name}
             </h1>
             <p className="text-sm sm:text-base text-metricsText">
               {profile.email}
             </p>
-            <div
-              className={`flex gap-2 items-center text-sm text-metricsText ${
-                profile.audience ? "text-green-500" : "text-red-500"
-              }`}
-            >
+            <div className="flex gap-2 items-center text-sm">
               {profile.audience ? (
-                <CheckCheck size={16} />
+                <>
+                  <CheckCheck size={16} className="text-green-500" />
+                  <p className="text-green-500">
+                    해당 계정은 TaeHyun's Devlog의 인증된 계정입니다.
+                  </p>
+                </>
               ) : (
-                <CircleAlert size={16} />
+                <>
+                  <CircleAlert size={16} className="text-red-500" />
+                  <p className="text-red-500">
+                    해당 계정은 TaeHyun's Devlog의 미인증된 계정입니다.
+                  </p>
+                </>
               )}
-              <p>
-                해당 계정은 TaeHyun's Devlog의{" "}
-                {profile.audience ? "인증" : "미인증"}된 계정입니다.
-              </p>
             </div>
           </div>
         </div>
@@ -329,113 +340,114 @@ export default function MyInfoPage() {
               ))}
             </div>
           </section>
-
-          <section className="space-y-4">
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold">내가 작성한 글</h2>
-                <p className="text-sm text-metricsText">
-                  총 {sortedUserPosts.length}개의 게시물이 있습니다.
-                </p>
+          {profiles.find((profile) => profile.is_admin) && (
+            <section className="space-y-4">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold">내가 작성한 글</h2>
+                  <p className="text-sm text-metricsText">
+                    총 {sortedUserPosts.length}개의 게시물이 있습니다.
+                  </p>
+                </div>
+                {sortedUserPosts.length > 0 && (
+                  <Link
+                    href="/posts"
+                    className="self-start rounded-button border border-containerColor px-4 py-2 text-sm text-metricsText transition hover:bg-gray-100"
+                  >
+                    전체 게시물 보기
+                  </Link>
+                )}
               </div>
-              {sortedUserPosts.length > 0 && (
-                <Link
-                  href="/posts"
-                  className="self-start rounded-button border border-containerColor px-4 py-2 text-sm text-metricsText transition hover:bg-gray-100"
-                >
-                  전체 게시물 보기
-                </Link>
-              )}
-            </div>
 
-            {sortedUserPosts.length > 0 ? (
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                {sortedUserPosts.slice(0, 6).map((post) => {
-                  const category = myCategories.find(
-                    (cat) => cat.id === post.category_id
-                  );
-                  const imageUrl = category?.thumbnail;
-                  const categoryName = category?.name || "미분류";
-                  const categorySlug = category
-                    ? lowerURL(category.name)
-                    : "posts";
-                  const commentCount = commentCountMap.get(post.id) || 0;
+              {sortedUserPosts.length > 0 ? (
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                  {sortedUserPosts.slice(0, 6).map((post) => {
+                    const category = myCategories.find(
+                      (cat) => cat.id === post.category_id
+                    );
+                    const imageUrl = category?.thumbnail;
+                    const categoryName = category?.name || "미분류";
+                    const categorySlug = category
+                      ? lowerURL(category.name)
+                      : "posts";
+                    const commentCount = commentCountMap.get(post.id) || 0;
 
-                  return (
-                    <Link
-                      key={post.id}
-                      href={`/posts/${categorySlug}/${post.id}`}
-                      className="group"
-                    >
-                      <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-containerColor/70 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-                        <div className="relative h-32 sm:h-36 md:h-40 w-full bg-gray-100">
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={`${categoryName} 썸네일`}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-metricsText">
-                              이미지 없음
+                    return (
+                      <Link
+                        key={post.id}
+                        href={`/posts/${categorySlug}/${post.id}`}
+                        className="group"
+                      >
+                        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-containerColor/70 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+                          <div className="relative h-32 sm:h-36 md:h-40 w-full bg-gray-100">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={`${categoryName} 썸네일`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-metricsText">
+                                이미지 없음
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+                            <div className="flex items-center justify-between">
+                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                                {categoryName}
+                              </span>
+                              <BookmarkIcon
+                                size={18}
+                                className="text-yellow-500"
+                                fill="currentColor"
+                                strokeWidth={1.5}
+                              />
                             </div>
-                          )}
-                        </div>
-                        <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-                          <div className="flex items-center justify-between">
-                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                              {categoryName}
-                            </span>
-                            <BookmarkIcon
-                              size={18}
-                              className="text-yellow-500"
-                              fill="currentColor"
-                              strokeWidth={1.5}
-                            />
+                            <h3 className="truncate text-lg font-semibold leading-tight text-gray-900">
+                              {post.title}
+                            </h3>
+                            <p className="text-sm text-metricsText">
+                              by {post.author_name}
+                            </p>
+                            <p className="text-sm text-metricsText">
+                              {formatDate(post.created_at)}
+                            </p>
+                            <div className="mt-auto flex items-center gap-4 pt-3 text-sm text-metricsText">
+                              <span className="flex items-center gap-1">
+                                <EyeIcon size={16} />
+                                {post.view_count ?? 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <HeartIcon size={16} />
+                                {post.like_count ?? 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquareTextIcon size={16} />
+                                {commentCount}
+                              </span>
+                            </div>
                           </div>
-                          <h3 className="truncate text-lg font-semibold leading-tight text-gray-900">
-                            {post.title}
-                          </h3>
-                          <p className="text-sm text-metricsText">
-                            by {post.author_name}
-                          </p>
-                          <p className="text-sm text-metricsText">
-                            {formatDate(post.created_at)}
-                          </p>
-                          <div className="mt-auto flex items-center gap-4 pt-3 text-sm text-metricsText">
-                            <span className="flex items-center gap-1">
-                              <EyeIcon size={16} />
-                              {post.view_count ?? 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <HeartIcon size={16} />
-                              {post.like_count ?? 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageSquareTextIcon size={16} />
-                              {commentCount}
-                            </span>
-                          </div>
-                        </div>
-                      </article>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex h-40 md:h-56 flex-col items-center justify-center rounded-container border border-dashed border-containerColor bg-white text-center text-metricsText">
-                <p className="text-base font-medium">
-                  아직 작성한 게시물이 없습니다.
-                </p>
-                <Link
-                  href="/posts"
-                  className="mt-3 rounded-button border border-containerColor px-4 py-2 text-sm transition hover:bg-gray-100"
-                >
-                  게시물 보러가기
-                </Link>
-              </div>
-            )}
-          </section>
+                        </article>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex h-40 md:h-56 flex-col items-center justify-center rounded-container border border-dashed border-containerColor bg-white text-center text-metricsText">
+                  <p className="text-base font-medium">
+                    아직 작성한 게시물이 없습니다.
+                  </p>
+                  <Link
+                    href="/posts"
+                    className="mt-3 rounded-button border border-containerColor px-4 py-2 text-sm transition hover:bg-gray-100"
+                  >
+                    게시물 보러가기
+                  </Link>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </div>
 
@@ -467,7 +479,9 @@ export default function MyInfoPage() {
               <div className="h-40 w-full overflow-hidden rounded-lg border border-containerColor">
                 <img
                   src={
-                    newBannerUrl || profiles[0]?.profile_banner || "default.png"
+                    newBannerUrl ||
+                    profiles[0]?.profile_banner ||
+                    "/default.png"
                   }
                   alt="현재 배너"
                   className="h-full w-full object-cover"
