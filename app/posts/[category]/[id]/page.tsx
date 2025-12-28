@@ -700,11 +700,18 @@ export default function PostDetailPage() {
         <Textarea
           className="w-full min-h-40 resize-none p-container border rounded"
           placeholder={
-            session ? "댓글을 입력하세요." : "로그인을 한 후 이용 가능합니다."
+            session
+              ? "댓글을 입력하세요. (최대 1000자)"
+              : "로그인을 한 후 이용 가능합니다."
           }
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={(e) => {
+            if (e.target.value.length > 1000)
+              alert("최대 1000자까지 입력 가능합니다.");
+            setComment(e.target.value);
+          }}
           disabled={!session}
+          maxLength={1000}
         />
         <div className="flex gap-2 justify-end">
           {session ? (
