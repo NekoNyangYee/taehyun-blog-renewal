@@ -41,6 +41,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPostsQueryFn,
   postsQueryKey,
+  fetchPostByIdQueryFn,
+  postDetailQueryKey,
   incrementViewCountMutationFn,
   toggleLikeMutationFn,
 } from "@components/queries/postQueries";
@@ -174,6 +176,14 @@ export default function PostDetailPage() {
     ? commentsQueryKey([numericPostId])
     : fallbackCommentsKey;
 
+  const postDetailQuery = useQuery({
+    queryKey: postDetailQueryKey(numericPostId),
+    queryFn: () => fetchPostByIdQueryFn(numericPostId),
+    enabled: hasValidPostId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
   const commentsQuery = useQuery({
     queryKey: activeCommentsKey,
     queryFn: () => fetchCommentsQueryFn([numericPostId]),
@@ -187,6 +197,27 @@ export default function PostDetailPage() {
       setCommentsFromQuery(commentsQuery.data);
     }
   }, [commentsQuery.data, setCommentsFromQuery]);
+
+  useEffect(() => {
+    if (postDetailQuery.data) {
+      setPost(postDetailQuery.data);
+      updatePostMetrics({
+        id: postDetailQuery.data.id,
+        view_count: postDetailQuery.data.view_count,
+        like_count: postDetailQuery.data.like_count,
+        liked_by_user: postDetailQuery.data.liked_by_user,
+      });
+    }
+  }, [postDetailQuery.data, setPost, updatePostMetrics]);
+
+  useEffect(() => {
+    if (postDetailQuery.error) {
+      console.error("게시물 상세 로드 실패:", postDetailQuery.error);
+      setIsNotFound(true);
+      setLoading(false);
+      setPostLoading(false);
+    }
+  }, [postDetailQuery.error, setPostLoading]);
 
   const postsReady = posts.length > 0;
   const categoriesReady = myCategories.length > 0;

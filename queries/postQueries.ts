@@ -1,9 +1,15 @@
 import { supabase } from "@components/lib/supabaseClient";
-import { PostMetrics, PostStateWithoutContents } from "@components/types/post";
+import {
+  PostMetrics,
+  PostState,
+  PostStateWithoutContents,
+} from "@components/types/post";
 
 export const postsQueryKey = ["posts"] as const;
 export const bookmarkQueryKey = (userId?: string) =>
   ["bookmarks", userId] as const;
+export const postDetailQueryKey = (postId: number | string) =>
+  ["posts", "detail", Number(postId)] as const;
 
 export const fetchPostsQueryFn = async (): Promise<
   PostStateWithoutContents[]
@@ -40,6 +46,32 @@ export const fetchBookmarksQueryFn = async (
   }
 
   return (data ?? []).map((b) => b.post_id);
+};
+
+export const fetchPostByIdQueryFn = async (
+  postId: number
+): Promise<PostState> => {
+  const postIdNum = Number(postId);
+
+  if (!Number.isFinite(postIdNum)) {
+    throw new Error("유효하지 않은 게시물 ID입니다.");
+  }
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", postIdNum)
+    .single();
+
+  if (error) {
+    throw new Error(`게시물 상세 불러오기 에러: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error("게시물을 찾을 수 없습니다.");
+  }
+
+  return data as PostState;
 };
 
 export const incrementViewCountMutationFn = async (postId: number) => {
