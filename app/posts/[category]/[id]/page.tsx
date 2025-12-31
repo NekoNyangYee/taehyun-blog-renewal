@@ -25,7 +25,6 @@ import {
   TagIcon,
 } from "lucide-react";
 import PageLoading from "@components/components/loading/PageLoading";
-import { supabase } from "@components/lib/supabaseClient";
 import { Button } from "@components/components/ui/button";
 import { useSessionStore } from "@components/store/sessionStore";
 import { cn } from "@components/lib/utils";
@@ -38,6 +37,21 @@ import { lowerURL } from "@components/lib/util/lowerURL";
 import NotFound from "@components/app/not-found";
 import { useProfileStore } from "@components/store/profileStore";
 import { GotoTop } from "@components/components/GoToTop";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  fetchPostsQueryFn,
+  postsQueryKey,
+  incrementViewCountMutationFn,
+  toggleLikeMutationFn,
+} from "@components/queries/postQueries";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
+import {
+  commentsQueryKey,
+  fetchCommentsQueryFn,
+} from "@components/queries/commentQueries";
 
 interface Heading {
   id: string;
@@ -95,10 +109,10 @@ function RenderedContent({ html }: { html: string }) {
 }
 
 export default function PostDetailPage() {
-  const { posts, fetchPosts } = usePostStore();
-  const { myCategories, fetchCategories } = useCategoriesStore();
+  const { posts, setPostsFromQuery, updatePostMetrics } = usePostStore();
+  const { myCategories, setCategoriesFromQuery } = useCategoriesStore();
   const { session } = useSessionStore();
-  const { comments, fetchComments, addComment, deleteComment } =
+  const { comments, addComment, deleteComment, setCommentsFromQuery } =
     useCommentStore();
   const { profiles, fetchProfiles } = useProfileStore();
   const pathname = usePathname();
@@ -123,15 +137,87 @@ export default function PostDetailPage() {
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
 
   const setPostLoading = useUIStore((state) => state.setPostLoading);
+  const queryClient = useQueryClient();
+  const userId = session?.user?.id;
+
+  const postsQuery = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
 
   useEffect(() => {
-    // 5초 타임아웃 설정 - 게시물 페이지용
+    if (postsQuery.data) {
+      setPostsFromQuery(postsQuery.data);
+    }
+  }, [postsQuery.data, setPostsFromQuery]);
+
+  const categoriesQuery = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60,
+  });
+
+  useEffect(() => {
+    if (categoriesQuery.data) {
+      setCategoriesFromQuery(categoriesQuery.data);
+    }
+  }, [categoriesQuery.data, setCategoriesFromQuery]);
+
+  const resolvedPostId = Array.isArray(id) ? id[0] : id;
+  const numericPostId = Number(resolvedPostId);
+  const hasValidPostId = Number.isFinite(numericPostId);
+  const fallbackCommentsKey = commentsQueryKey("no-id");
+  const activeCommentsKey = hasValidPostId
+    ? commentsQueryKey([numericPostId])
+    : fallbackCommentsKey;
+
+  const commentsQuery = useQuery({
+    queryKey: activeCommentsKey,
+    queryFn: () => fetchCommentsQueryFn([numericPostId]),
+    enabled: hasValidPostId,
+    staleTime: 1000 * 60,
+    gcTime: 1000 * 60 * 5,
+  });
+
+  useEffect(() => {
+    if (commentsQuery.data) {
+      setCommentsFromQuery(commentsQuery.data);
+    }
+  }, [commentsQuery.data, setCommentsFromQuery]);
+
+  const postsReady = posts.length > 0;
+  const categoriesReady = myCategories.length > 0;
+
+  const viewCountMutation = useMutation({
+    mutationFn: incrementViewCountMutationFn,
+  });
+
+  const toggleLikeMutation = useMutation({
+    mutationFn: toggleLikeMutationFn,
+  });
+
+  const invalidateCommentsCache = () => {
+    if (hasValidPostId) {
+      queryClient.invalidateQueries({
+        queryKey: commentsQueryKey([numericPostId]),
+      });
+    }
+  };
+
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
       console.log("게시물 페이지 5초 타임아웃 - 404 표시");
       setIsNotFound(true);
       setLoading(false);
       setPostLoading(false);
     }, 5000);
+
+    if (!resolvedPostId || !urlCategory || !postsReady || !categoriesReady) {
+      return () => clearTimeout(timeoutId);
+    }
 
     const fetchPost = async (): Promise<boolean> => {
       setPostLoading(true);
@@ -147,17 +233,7 @@ export default function PostDetailPage() {
         return false;
       }
 
-      // 게시물이 없으면 먼저 불러오기
-      if (posts.length === 0) {
-        await fetchPosts();
-      }
-
-      // 카테고리가 없으면 먼저 불러오기
-      if (myCategories.length === 0) {
-        await fetchCategories();
-      }
       fetchProfiles();
-      // 최신 상태의 posts와 categories를 가져옴
       const updatedPosts = usePostStore.getState().posts;
       const updatedCategories = useCategoriesStore.getState().myCategories;
       const selectedPost = updatedPosts.find((p) => String(p.id) === postId);
@@ -214,28 +290,17 @@ export default function PostDetailPage() {
 
       // 조회수 증가 로직 (한 번만 실행되도록 방지)
       if (!hasIncremented) {
-        const { incrementViewCount } = usePostStore.getState();
-        if (incrementViewCount) {
-          await incrementViewCount(selectedPost.id);
+        const nextViewCount = (selectedPost.view_count ?? 0) + 1;
+        try {
+          await viewCountMutation.mutateAsync(selectedPost.id);
           setHasIncremented(true);
-
-          // 조회수 증가 후, 500ms 대기 후 최신 데이터를 다시 불러옴
-          setTimeout(async () => {
-            const { data: updatedPost, error: fetchUpdatedError } =
-              await supabase
-                .from("posts")
-                .select("*")
-                .eq("id", selectedPost.id)
-                .single();
-
-            if (!fetchUpdatedError && updatedPost) {
-              setPost(updatedPost);
-            }
-
-            setLoading(false);
-            setPostLoading(false);
-          }, 500);
-        } else {
+          setPost((prev) =>
+            prev ? { ...prev, view_count: nextViewCount } : prev
+          );
+          updatePostMetrics({ id: selectedPost.id, view_count: nextViewCount });
+        } catch (error) {
+          console.error("조회수 증가 실패:", error);
+        } finally {
           setLoading(false);
           setPostLoading(false);
         }
@@ -249,18 +314,15 @@ export default function PostDetailPage() {
 
     const runFetch = async () => {
       const success = await fetchPost();
-      // fetchPost에서 성공했을 때만 fetchComments 실행
-      if (success) {
-        fetchComments(String(id));
-      } else {
-        console.log("fetchPost 실패 - fetchComments 생략");
+      if (!success) {
+        console.log("fetchPost 실패");
       }
     };
 
     runFetch();
 
     return () => clearTimeout(timeoutId);
-  }, [pathname]); // hasIncremented 제거하여 의도치 않은 반복 실행 방지
+  }, [pathname, resolvedPostId, urlCategory, postsReady, categoriesReady]); // hasIncremented 제거하여 의도치 않은 반복 실행 방지
 
   // 본문 내용이 실제로 바뀔 때만 목차 재계산 (좋아요로 인한 불필요한 재계산 방지)
   useEffect(() => {
@@ -388,7 +450,7 @@ export default function PostDetailPage() {
   const nextPage =
     currentPageIndex < posts.length - 1 ? posts[currentPageIndex + 1] : null;
 
-  const handleHeartClick = async () => {
+  const handleHeartClick = () => {
     if (!session) {
       if (
         confirm(
@@ -400,48 +462,21 @@ export default function PostDetailPage() {
       return;
     }
 
-    const userId = session.user?.id;
     if (!userId || !post) return;
 
-    try {
-      // 현재 상태를 기반으로 좋아요 여부 판단
-      const isLiked = post.liked_by_user?.includes(userId);
-      const newLikeCount = isLiked
-        ? (post.like_count || 0) - 1
-        : (post.like_count || 0) + 1;
-      const updatedLikedByUser = isLiked
-        ? (post.liked_by_user || []).filter((id) => id !== userId) // 취소 시 목록에서 제거
-        : [...(post.liked_by_user || []), userId]; // 추가 시 목록에 포함
-
-      // UI를 먼저 업데이트하지 않고 Supabase 업데이트 실행
-      const { error } = await supabase
-        .from("posts")
-        .update({
-          like_count: newLikeCount,
-          liked_by_user: updatedLikedByUser,
-        })
-        .eq("id", post.id);
-
-      if (error) {
-        console.error("🚨 좋아요 업데이트 실패:", error);
-        return;
+    toggleLikeMutation.mutate(
+      { postId: post.id, likedByUser: userId },
+      {
+        onSuccess: (metrics) => {
+          setPost((prev) => (prev ? { ...prev, ...metrics } : prev));
+          updatePostMetrics(metrics);
+          setIsHeartClicked(metrics.liked_by_user?.includes(userId) ?? false);
+        },
+        onError: (error) => {
+          console.error("🚨 좋아요 처리 중 오류 발생:", error);
+        },
       }
-
-      // Supabase 업데이트가 성공한 후 상태를 변경
-      setPost((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          like_count: newLikeCount,
-          liked_by_user: updatedLikedByUser,
-        };
-      });
-
-      // 상태 변경 후 버튼 상태 업데이트
-      setIsHeartClicked(!isLiked);
-    } catch (error) {
-      console.error("🚨 좋아요 처리 중 오류 발생:", error);
-    }
+    );
   };
 
   const handleSubmitReply = async () => {
@@ -466,7 +501,7 @@ export default function PostDetailPage() {
     });
 
     setComment("");
-    fetchComments(String(post?.id));
+    invalidateCommentsCache();
   };
 
   const deleteHandleComment = async (commentId: string | number) => {
@@ -474,7 +509,7 @@ export default function PostDetailPage() {
     if (!commentId) return;
     if (confirm("정말 삭제하시겠습니까?")) {
       await deleteComment(commentId); // ✅ commentId를 사용하여 삭제
-      fetchComments(String(post?.id));
+      invalidateCommentsCache();
     } else {
       return;
     }
@@ -512,7 +547,7 @@ export default function PostDetailPage() {
 
     setReplyContent("");
     setReplyingTo(null);
-    fetchComments(String(post?.id));
+    invalidateCommentsCache();
   };
 
   const toggleReply = (commentId: number) => {

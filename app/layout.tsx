@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import PageLoading from "@components/components/loading/PageLoading";
 import Footer from "@components/components/Footer";
 import Script from "next/script";
+import { ReactQueryProvider } from "./ReactQueryProvider";
 
 export const metadata: Metadata = {
   title: "TaeHyun's Devlog",
@@ -72,10 +73,12 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col h-screen">
         <Header />
-        <div className="flex flex-1  max-w-[90rem] box-border mx-auto w-full pt-[65px]">
-          <NavBar />
-          <Suspense fallback={<PageLoading />}>{children}</Suspense>
-        </div>
+        <ReactQueryProvider>
+          <div className="flex flex-1  max-w-[90rem] box-border mx-auto w-full pt-[65px]">
+            <NavBar />
+            <Suspense fallback={<PageLoading />}>{children}</Suspense>
+          </div>
+        </ReactQueryProvider>
         <Footer />
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"

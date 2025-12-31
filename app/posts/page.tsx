@@ -1,6 +1,6 @@
 import React from "react";
 import Head from "next/head";
-import PostDetailPage from "./Posts";
+import PostsPageView from "./Posts";
 
 export default function PostPage() {
   return (
@@ -35,7 +35,7 @@ export default function PostPage() {
           }}
         />
       </Head>
-      <PostDetailPage />
+      <PostsPageView />
     </>
   );
 }

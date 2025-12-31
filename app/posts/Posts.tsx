@@ -1,12 +1,8 @@
 "use client";
 
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import {
-  PostState,
-  PostStateWithoutContents,
-  usePostStore,
-} from "@components/store/postStore";
+import { usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import CategoryButtons from "@components/components/CategoryButtons";
 import {
@@ -30,6 +26,13 @@ import {
 import { cn } from "@components/lib/utils";
 import { useSessionStore } from "@components/store/sessionStore";
 import { lowerURL } from "@components/lib/util/lowerURL";
+import { useQuery } from "@tanstack/react-query";
+import {
+  bookmarkQueryKey,
+  fetchBookmarksQueryFn,
+  fetchPostsQueryFn,
+  postsQueryKey,
+} from "@components/queries/postQueries";
 
 export default function PostsPage() {
   const pathname = usePathname();
@@ -38,10 +41,10 @@ export default function PostsPage() {
   const {
     posts,
     bookmarks,
-    fetchPosts,
-    fetchBookmarkPosts,
     addBookmark,
     removeBookmark,
+    setPostsFromQuery,
+    setBookmarksFromQuery,
   } = usePostStore();
   const { myCategories, fetchCategories } = useCategoriesStore();
   const { comments, fetchComments } = useCommentStore();
@@ -49,12 +52,39 @@ export default function PostsPage() {
   const [filteredPosts, setFilteredPosts] = useState(posts);
   const [sortOrder, setSortOrder] = useState<string>("new-sort");
 
+  const postsQuery = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
+  const bookmarksQuery = useQuery({
+    queryKey: bookmarkQueryKey(userId),
+    queryFn: () => fetchBookmarksQueryFn(userId),
+    enabled: Boolean(userId),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
   useEffect(() => {
-    if (posts.length === 0) {
-      fetchPosts();
+    if (postsQuery.data) {
+      setPostsFromQuery(postsQuery.data);
     }
+  }, [postsQuery.data, setPostsFromQuery]);
+
+  useEffect(() => {
+    if (userId && bookmarksQuery.data) {
+      setBookmarksFromQuery(bookmarksQuery.data);
+    }
+    if (!userId) {
+      setBookmarksFromQuery([]);
+    }
+  }, [bookmarksQuery.data, setBookmarksFromQuery, userId]);
+
+  useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   useEffect(() => {
     if (posts.length > 0) {
@@ -75,12 +105,6 @@ export default function PostsPage() {
       setSelectedCategory(null);
     }
   }, [pathname]);
-
-  useEffect(() => {
-    fetchPosts();
-    fetchCategories();
-    if (userId) fetchBookmarkPosts(userId); // 로그인한 사용자의 북마크 목록 가져오기
-  }, [userId]);
 
   // ✅ `selectedCategory`가 변경될 때 `filteredPosts`를 즉시 업데이트 (로딩 지연 방지)
   useEffect(() => {

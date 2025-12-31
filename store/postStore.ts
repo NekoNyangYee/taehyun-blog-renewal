@@ -1,23 +1,26 @@
-import { supabase } from "@components/lib/supabaseClient";
 import { create } from "zustand";
+import {
+  PostMetrics,
+  PostMeta,
+  PostStateWithoutContents,
+} from "@components/types/post";
+import {
+  addBookmarkMutationFn,
+  fetchBookmarksQueryFn,
+  fetchPostsQueryFn,
+  incrementViewCountMutationFn,
+  removeBookmarkMutationFn,
+  toggleLikeMutationFn,
+} from "@components/queries/postQueries";
 
-export interface PostState {
-  id: number;
-  title: string;
-  contents: string;
-  author_id: string;
-  author_name: string;
-  status?: string;
-  visibility?: string;
-  created_at: string;
-  updated_at: string;
-  view_count?: number;
-  like_count?: number;
-  category_id: number;
-  liked_by_user?: string[];
-}
+export type {
+  PostState,
+  PostStateWithoutContents,
+  PostMeta,
+  PostMetrics,
+} from "@components/types/post";
 
-interface PostsProps {
+interface PostsUIStore {
   posts: PostStateWithoutContents[];
   bookmarks: number[];
   fetchPosts: () => Promise<void>;
@@ -29,160 +32,122 @@ interface PostsProps {
   ) => Promise<void>;
   addBookmark: (userId: string, postId: number) => Promise<void>;
   removeBookmark: (userId: string, postId: number) => Promise<void>;
+  setPostsFromQuery: (posts: PostStateWithoutContents[]) => void;
+  setBookmarksFromQuery: (bookmarkIds: number[]) => void;
+  upsertPostSummary: (post: PostStateWithoutContents) => void;
+  updatePostMetrics: (metrics: PostMetrics) => void;
+  isBookmarked: (postId: number) => boolean;
+  getPostMeta: (postId: number) => PostMeta | undefined;
 }
 
-export type PostStateWithoutContents = Omit<PostState, "contents">;
-
-export const usePostStore = create<PostsProps>((set, get) => ({
+export const usePostStore = create<PostsUIStore>((set, get) => ({
   posts: [],
-  bookmarks: [], // 북마크된 게시물 목록
+  bookmarks: [],
 
   fetchPosts: async () => {
     try {
-      // ✅ contents를 제외하고 필요한 필드만 가져오기
-      let { data, error } = await supabase
-        .from("posts")
-        .select(
-          "id, title, author_id, author_name, status, visibility, created_at, updated_at, view_count, like_count, category_id, liked_by_user"
-        )
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("게시물 불러오는 도중 에러", error);
-        return;
-      }
-
-      if (data) {
-        // public 게시물만 필터링
-        data = data.filter((post) => post.visibility === "public");
-        set({ posts: data });
-      }
-    } catch (err) {
-      console.error("🚨 fetchPosts 예외 발생:", err);
+      const posts = await fetchPostsQueryFn();
+      set({ posts });
+    } catch (error) {
+      console.error("🚨 fetchPosts 예외 발생:", error);
     }
   },
 
   fetchBookmarkPosts: async (userId) => {
     if (!userId) return;
 
-    const { data, error } = await supabase
-      .from("bookmarks")
-      .select("post_id")
-      .eq("user_id", userId);
-
-    if (error) {
+    try {
+      const bookmarkIds = await fetchBookmarksQueryFn(userId);
+      set({ bookmarks: bookmarkIds });
+    } catch (error) {
       console.error("북마크 게시물 불러오는 중 에러", error);
-      return;
-    }
-
-    console.log("Fetched bookmark IDs:", data); // ✅ 북마크된 post_id 확인
-
-    if (data) {
-      set({ bookmarks: data.map((b) => b.post_id) });
     }
   },
 
   incrementViewCount: async (postId) => {
-    const postIdNum = Number(postId);
-
-    const { data, error } = await supabase
-      .from("posts")
-      .select("view_count")
-      .eq("id", postIdNum)
-      .single();
-
-    if (error) {
+    try {
+      await incrementViewCountMutationFn(postId);
+      set((state) => ({
+        posts: state.posts.map((post) =>
+          post.id === postId
+            ? { ...post, view_count: (post.view_count ?? 0) + 1 }
+            : post
+        ),
+      }));
+    } catch (error) {
       console.error("조회수 증가 중 에러", error);
-      return;
-    }
-
-    if (data) {
-      const viewCount = data.view_count || 0;
-      await supabase
-        .from("posts")
-        .update({ view_count: viewCount + 1 })
-        .eq("id", postIdNum);
     }
   },
 
   incrementLikeCount: async (postId, likedByUser) => {
-    const postIdNumber = Number(postId);
-
-    const { data: post, error } = await supabase
-      .from("posts")
-      .select("liked_by_user, like_count")
-      .eq("id", postIdNumber)
-      .single();
-
-    if (error) {
+    try {
+      const metrics = await toggleLikeMutationFn({ postId, likedByUser });
+      set((state) => ({
+        posts: state.posts.map((post) =>
+          post.id === metrics.id ? { ...post, ...metrics } : post
+        ),
+      }));
+    } catch (error) {
       console.error("좋아요 증가 중 에러", error);
-      return;
     }
-
-    const likedByUserList: string[] = post?.liked_by_user ?? [];
-    const isLiked = likedByUserList.includes(likedByUser);
-
-    let newLikeCount = post?.like_count ?? 0;
-
-    if (isLiked) {
-      newLikeCount -= 1;
-      likedByUserList.splice(likedByUserList.indexOf(likedByUser), 1);
-    } else {
-      newLikeCount += 1;
-      likedByUserList.push(likedByUser);
-    }
-
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ like_count: newLikeCount, liked_by_user: likedByUserList })
-      .eq("id", postIdNumber);
-
-    if (updateError) {
-      console.error("🚨 좋아요 수 업데이트 실패:", updateError);
-      return;
-    }
-
-    // ✅ 전체 목록을 다시 불러오지 않고, 로컬 상태만 업데이트 (깜빡임 방지)
-    // 상세 페이지에서 setPost로 이미 업데이트하므로 fetchPosts 불필요
   },
 
-  // ✅ 북마크 추가
   addBookmark: async (userId, postId) => {
     if (!userId) return;
 
-    const { error } = await supabase
-      .from("bookmarks")
-      .insert([{ user_id: userId, post_id: postId }]);
-
-    if (error) {
-      console.error("북마크 추가 실패:", error.message);
-      return;
+    try {
+      await addBookmarkMutationFn({ userId, postId });
+      set((state) => ({ bookmarks: [...state.bookmarks, postId] }));
+    } catch (error) {
+      console.error("북마크 추가 실패:", error);
     }
-
-    // Zustand 상태 업데이트
-    set((state) => ({
-      bookmarks: [...state.bookmarks, postId],
-    }));
   },
 
-  // ✅ 북마크 제거
   removeBookmark: async (userId, postId) => {
     if (!userId) return;
 
-    const { error } = await supabase
-      .from("bookmarks")
-      .delete()
-      .eq("user_id", userId)
-      .eq("post_id", postId);
-
-    if (error) {
-      console.error("북마크 삭제 실패:", error.message);
-      return;
+    try {
+      await removeBookmarkMutationFn({ userId, postId });
+      set((state) => ({
+        bookmarks: state.bookmarks.filter((id) => id !== postId),
+      }));
+    } catch (error) {
+      console.error("북마크 삭제 실패:", error);
     }
+  },
 
-    // Zustand 상태 업데이트
+  setPostsFromQuery: (posts) => set({ posts }),
+
+  setBookmarksFromQuery: (bookmarkIds) => set({ bookmarks: bookmarkIds }),
+
+  upsertPostSummary: (incomingPost) =>
+    set((state) => {
+      const index = state.posts.findIndex(
+        (post) => post.id === incomingPost.id
+      );
+      if (index === -1) {
+        return { posts: [incomingPost, ...state.posts] };
+      }
+      const nextPosts = [...state.posts];
+      nextPosts[index] = { ...nextPosts[index], ...incomingPost };
+      return { posts: nextPosts };
+    }),
+
+  updatePostMetrics: (metrics) =>
     set((state) => ({
-      bookmarks: state.bookmarks.filter((id) => id !== postId),
-    }));
+      posts: state.posts.map((post) =>
+        post.id === metrics.id ? { ...post, ...metrics } : post
+      ),
+    })),
+
+  isBookmarked: (postId) => get().bookmarks.includes(postId),
+
+  getPostMeta: (postId) => {
+    const targetPost = get().posts.find((post) => post.id === postId);
+    if (!targetPost) {
+      return undefined;
+    }
+    const { id, title, author_name, created_at, category_id } = targetPost;
+    return { id, title, author_name, created_at, category_id };
   },
 }));

@@ -1,23 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PageLoading from "@components/components/loading/PageLoading";
-import { supabase } from "@components/lib/supabaseClient";
-import { addUserToProfileTable } from "@components/lib/loginUtils";
+import PageLoading from "../components/loading/PageLoading";
+import { supabase } from "../lib/supabaseClient";
+import { addUserToProfileTable } from "../lib/loginUtils";
+import NotFound from "./not-found";
+import { useQuery } from "@tanstack/react-query";
 import { usePostStore } from "@components/store/postStore";
-import NotFound from "@components/app/not-found";
+import {
+  fetchPostsQueryFn,
+  postsQueryKey,
+} from "@components/queries/postQueries";
 
 export default function LoadingWrapper({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { fetchPosts } = usePostStore();
+  const { setPostsFromQuery } = usePostStore();
   const [loading, setLoading] = useState(true);
   const [showNotFound, setShowNotFound] = useState(false);
 
+  const postsQuery = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
   useEffect(() => {
-    // 5초 타임아웃 설정
+    if (postsQuery.data) {
+      setPostsFromQuery(postsQuery.data);
+    }
+  }, [postsQuery.data, setPostsFromQuery]);
+
+  useEffect(() => {
+    if (!postsQuery.isLoading) {
+      setLoading(false);
+      return;
+    }
+
     const timeoutId = setTimeout(() => {
       console.log("5초 타임아웃 - 404 표시");
       setShowNotFound(true);
@@ -44,14 +66,10 @@ export default function LoadingWrapper({
       }
     };
 
-    fetchPosts().finally(() => {
-      clearTimeout(timeoutId);
-      setLoading(false);
-    });
     addUser();
 
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [postsQuery.isLoading]);
 
   if (loading) {
     return <PageLoading />;

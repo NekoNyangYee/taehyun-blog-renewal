@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { usePostStore } from "@components/store/postStore";
 import { useCategoriesStore } from "@components/store/categoriesStore";
@@ -23,6 +23,17 @@ import {
 } from "@components/components/ui/select";
 import { cn } from "@components/lib/utils";
 import { useSessionStore } from "@components/store/sessionStore";
+import { useQuery } from "@tanstack/react-query";
+import {
+  bookmarkQueryKey,
+  fetchBookmarksQueryFn,
+  fetchPostsQueryFn,
+  postsQueryKey,
+} from "@components/queries/postQueries";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
 
 export default function CategoryPage({
   params,
@@ -32,23 +43,62 @@ export default function CategoryPage({
   const pathname = usePathname();
   const { session } = useSessionStore();
   const userId = session?.user?.id;
-  const { posts, bookmarks, fetchPosts, addBookmark, removeBookmark } =
-    usePostStore();
-  const { myCategories, fetchCategories } = useCategoriesStore();
+  const {
+    posts,
+    bookmarks,
+    addBookmark,
+    removeBookmark,
+    setPostsFromQuery,
+    setBookmarksFromQuery,
+  } = usePostStore();
+  const { myCategories, setCategoriesFromQuery } = useCategoriesStore();
   const { comments, fetchComments } = useCommentStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     decodeURIComponent(params.category)
   );
   const [sortOrder, setSortOrder] = useState<string>("new-sort");
-  const [isPending, setIsPending] = useState(true);
+  const postsQuery = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
+  const bookmarksQuery = useQuery({
+    queryKey: bookmarkQueryKey(userId),
+    queryFn: () => fetchBookmarksQueryFn(userId),
+    enabled: Boolean(userId),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60,
+  });
 
   useEffect(() => {
-    setIsPending(true);
-    fetchPosts().then(() => {
-      setIsPending(false);
-    });
-    fetchCategories();
-  }, []);
+    if (postsQuery.data) {
+      setPostsFromQuery(postsQuery.data);
+    }
+  }, [postsQuery.data, setPostsFromQuery]);
+
+  useEffect(() => {
+    if (categoriesQuery.data) {
+      setCategoriesFromQuery(categoriesQuery.data);
+    }
+  }, [categoriesQuery.data, setCategoriesFromQuery]);
+
+  useEffect(() => {
+    if (userId && bookmarksQuery.data) {
+      setBookmarksFromQuery(bookmarksQuery.data);
+    }
+    if (!userId) {
+      setBookmarksFromQuery([]);
+    }
+  }, [bookmarksQuery.data, setBookmarksFromQuery, userId]);
 
   useEffect(() => {
     if (posts.length > 0) {
@@ -61,7 +111,6 @@ export default function CategoryPage({
     const categoryFromURL = decodeURIComponent(pathname.split("/").pop() || "");
     if (categoryFromURL !== "posts" && selectedCategory !== categoryFromURL) {
       setSelectedCategory(categoryFromURL);
-      fetchPosts();
     }
   }, [pathname]);
 
@@ -87,6 +136,8 @@ export default function CategoryPage({
       return 0;
     });
   }, [filteredPosts, sortOrder]); // 🔥 posts와 정렬 기준이 바뀔 때만 재계산
+
+  const isPending = postsQuery.isLoading || categoriesQuery.isLoading;
 
   return (
     <div className="flex flex-col gap-4 p-container w-full">
