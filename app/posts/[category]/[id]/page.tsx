@@ -192,6 +192,8 @@ export default function PostDetailPage() {
     gcTime: 1000 * 60 * 5,
   });
 
+  const isHydratingPost = postDetailQuery.isLoading && !postDetailQuery.data;
+
   useEffect(() => {
     if (commentsQuery.data) {
       setCommentsFromQuery(commentsQuery.data);
@@ -587,7 +589,7 @@ export default function PostDetailPage() {
 
   console.log("렌더링 시점:", { loading, isNotFound });
 
-  if (loading) {
+  if (loading || isHydratingPost) {
     console.log("PageLoading 렌더링");
     return <PageLoading />;
   }

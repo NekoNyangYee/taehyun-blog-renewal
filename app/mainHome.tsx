@@ -1,13 +1,24 @@
 "use client";
 
 import HeroSection from "@components/components/HeroSection";
-import { addUserToProfileTable } from "@components/lib/loginUtils";
-import { supabase } from "@components/lib/supabaseClient";
 import { formatDate } from "@components/lib/util/dayjs";
 import { lowerURL } from "@components/lib/util/lowerURL";
 import { useCategoriesStore } from "@components/store/categoriesStore";
 import { useCommentStore } from "@components/store/commentStore";
 import { usePostStore } from "@components/store/postStore";
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchPostsQueryFn,
+  postsQueryKey,
+} from "@components/queries/postQueries";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
+import {
+  commentsQueryKey,
+  fetchCommentsQueryFn,
+} from "@components/queries/commentQueries";
 import {
   ArrowUpWideNarrowIcon,
   ChevronRight,
@@ -17,34 +28,54 @@ import {
   MessageSquareTextIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 export default function MainHome() {
-  const { posts } = usePostStore();
-  const { myCategories } = useCategoriesStore();
-  const { comments, fetchComments } = useCommentStore();
+  const { posts, setPostsFromQuery } = usePostStore();
+  const { myCategories, setCategoriesFromQuery } = useCategoriesStore();
+  const { comments, setCommentsFromQuery } = useCommentStore();
+
+  const postsQuery = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60,
+  });
+
+  const postIds = useMemo(() => posts.map((post) => post.id), [posts]);
+
+  const commentsQuery = useQuery({
+    queryKey: commentsQueryKey(postIds),
+    queryFn: () => fetchCommentsQueryFn(postIds),
+    enabled: postIds.length > 0,
+    staleTime: 1000 * 60,
+    gcTime: 1000 * 60 * 5,
+  });
 
   useEffect(() => {
-    const addUser = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("세션 가져오기 에러:", error);
-        return;
-      }
-      if (data.session) {
-        const userSessionData = {
-          id: data.session.user.id,
-          nickname: data.session.user.user_metadata.full_name || "",
-          profile: data.session.user.user_metadata.avatar_url || "",
-          email: data.session.user.email,
-        };
-        await addUserToProfileTable(userSessionData);
-        console.log("유저 추가 완료");
-      }
-    };
-    addUser();
-    fetchComments(posts.map((post) => post.id).join(","));
-  }, []);
+    if (postsQuery.data) {
+      setPostsFromQuery(postsQuery.data);
+    }
+  }, [postsQuery.data, setPostsFromQuery]);
+
+  useEffect(() => {
+    if (categoriesQuery.data) {
+      setCategoriesFromQuery(categoriesQuery.data);
+    }
+  }, [categoriesQuery.data, setCategoriesFromQuery]);
+
+  useEffect(() => {
+    if (commentsQuery.data) {
+      setCommentsFromQuery(commentsQuery.data);
+    }
+  }, [commentsQuery.data, setCommentsFromQuery]);
 
   // 인기 게시물(조회수 기준 상위 4개)
   const popularPosts = [...posts]
