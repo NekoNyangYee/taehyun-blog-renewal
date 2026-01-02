@@ -248,7 +248,7 @@ export default function MainHome() {
         )}
       </section>
 
-      <section className="flex flex-col gap-6 px-5 md:px-0">
+      <section className="flex flex-col gap-6 md:px-0">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">
             <h2 className="flex gap-3 text-3xl md:text-4xl font-bold items-center">
