@@ -74,7 +74,7 @@ export default function MyInfoPage() {
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetchProfiles();
+    fetchProfiles(session.user.id);
   }, [session?.user?.id, fetchProfiles]);
 
   useEffect(() => {

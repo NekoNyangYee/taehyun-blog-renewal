@@ -241,121 +241,30 @@ export default function PostDetailPage() {
   };
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      console.log("게시물 페이지 5초 타임아웃 - 404 표시");
-      setIsNotFound(true);
-      setLoading(false);
-      setPostLoading(false);
-    }, 5000);
+    setPostLoading(isHydratingPost);
+  }, [isHydratingPost, setPostLoading]);
 
-    if (!resolvedPostId || !urlCategory || !postsReady || !categoriesReady) {
-      return () => clearTimeout(timeoutId);
-    }
-
-    const fetchPost = async (): Promise<boolean> => {
-      setPostLoading(true);
-      setLoading(true);
-      const postId = pathname.split("/").pop();
-
-      if (!postId || !urlCategory) {
-        clearTimeout(timeoutId);
-        setPost(null);
-        setIsNotFound(true);
-        setLoading(false);
-        setPostLoading(false);
-        return false;
-      }
-
-      fetchProfiles();
-      const updatedPosts = usePostStore.getState().posts;
-      const updatedCategories = useCategoriesStore.getState().myCategories;
-      const selectedPost = updatedPosts.find((p) => String(p.id) === postId);
-
-      console.log("검증 시작:", { postId, selectedPost, updatedCategories });
-
-      // 1. 게시물이 posts 배열에 없으면 404 (비공개이거나 존재하지 않음)
-      if (!selectedPost) {
-        console.log("게시물 없음 - 404");
-        clearTimeout(timeoutId);
-        setIsNotFound(true);
-        setPost(null);
-        setLoading(false);
-        setPostLoading(false);
-        return false;
-      }
-
-      // 2. 게시물의 카테고리와 URL 카테고리 비교
-      const postCategory = updatedCategories.find(
-        (cat) => cat.id === selectedPost.category_id
-      );
-
-      const decodedUrlCategory = decodeURIComponent(String(urlCategory));
-      console.log("카테고리 비교:", {
-        postCategory: postCategory?.name,
-        urlCategory: decodedUrlCategory,
-        postCategoryLower: postCategory ? lowerURL(postCategory.name) : null,
-        urlCategoryLower: lowerURL(decodedUrlCategory),
-      });
-
-      if (
-        !postCategory ||
-        lowerURL(postCategory.name) !== lowerURL(decodedUrlCategory)
-      ) {
-        console.log("카테고리 불일치 - 404");
-        clearTimeout(timeoutId);
-        setIsNotFound(true);
-        setPost(null);
-        setLoading(false);
-        setPostLoading(false);
-        return false;
-      }
-
-      console.log("검증 통과 - 정상 로딩");
-      clearTimeout(timeoutId);
-      setIsNotFound(false);
-
-      // selectedPost may come from the posts list and omit the 'contents' field;
-      // provide a safe fallback so the PostState type is satisfied until the full post is fetched.
-      setPost({
-        ...(selectedPost as PostStateWithoutContents),
-        contents: (selectedPost as any).contents ?? "",
-      });
-
-      // 조회수 증가 로직 (한 번만 실행되도록 방지)
-      if (!hasIncremented) {
-        const nextViewCount = (selectedPost.view_count ?? 0) + 1;
+  useEffect(() => {
+    if (post && !hasIncremented) {
+      const incrementView = async () => {
         try {
-          await viewCountMutation.mutateAsync(selectedPost.id);
+          await viewCountMutation.mutateAsync(post.id);
           setHasIncremented(true);
+          const newViewCount = (post.view_count ?? 0) + 1;
           setPost((prev) =>
-            prev ? { ...prev, view_count: nextViewCount } : prev
+            prev ? { ...prev, view_count: newViewCount } : prev
           );
-          updatePostMetrics({ id: selectedPost.id, view_count: nextViewCount });
+          updatePostMetrics({
+            id: post.id,
+            view_count: newViewCount,
+          });
         } catch (error) {
           console.error("조회수 증가 실패:", error);
-        } finally {
-          setLoading(false);
-          setPostLoading(false);
         }
-      } else {
-        setLoading(false);
-        setPostLoading(false);
-      }
-
-      return true;
-    };
-
-    const runFetch = async () => {
-      const success = await fetchPost();
-      if (!success) {
-        console.log("fetchPost 실패");
-      }
-    };
-
-    runFetch();
-
-    return () => clearTimeout(timeoutId);
-  }, [pathname, resolvedPostId, urlCategory, postsReady, categoriesReady]); // hasIncremented 제거하여 의도치 않은 반복 실행 방지
+      };
+      incrementView();
+    }
+  }, [post?.id]);
 
   // 본문 내용이 실제로 바뀔 때만 목차 재계산 (좋아요로 인한 불필요한 재계산 방지)
   useEffect(() => {
@@ -705,7 +614,7 @@ export default function PostDetailPage() {
             <div className="flex gap-4 items-center justify-between">
               <div className="flex flex-col">
                 <p className="text-sm text-gray-700">다음 게시물</p>
-                <p className="truncate max-w-[200px] overflow-hidden text-ellipsis font-bold">
+                <p className="truncate leading-tight max-w-[200px] overflow-hidden text-ellipsis font-bold">
                   {nextPage.title}
                 </p>
               </div>
