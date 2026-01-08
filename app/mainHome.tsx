@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import HeroSection from "@components/components/HeroSection";
 import { formatDate } from "@components/lib/util/dayjs";
 import { lowerURL } from "@components/lib/util/lowerURL";
@@ -80,15 +81,15 @@ export default function MainHome() {
   const postsQuery = useQuery({
     queryKey: postsQueryKey,
     queryFn: fetchPostsQueryFn,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 60, // 1시간
+    gcTime: 1000 * 60 * 60 * 24, // 24시간
   });
 
   const categoriesQuery = useQuery({
     queryKey: categoriesQueryKey,
     queryFn: fetchCategoriesQueryFn,
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 60 * 24, // 24시간
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7일
   });
 
   const postIds = useMemo(() => posts.map((post) => post.id), [posts]);
@@ -97,8 +98,8 @@ export default function MainHome() {
     queryKey: commentsQueryKey(postIds),
     queryFn: () => fetchCommentsQueryFn(postIds),
     enabled: postIds.length > 0,
-    staleTime: 1000 * 60,
-    gcTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 30, // 30분
+    gcTime: 1000 * 60 * 60, // 1시간
   });
 
   useEffect(() => {
@@ -170,10 +171,13 @@ export default function MainHome() {
                       <article className="group h-full flex flex-col overflow-hidden rounded-2xl border border-containerColor/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-containerColor min-w-[300px] max-w-[300px]">
                         <div className="relative h-48 w-full bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                           {imageUrl ? (
-                            <img
+                            <Image
                               src={imageUrl}
                               alt={post.title}
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              fill
+                              quality={65}
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              sizes="(max-width: 768px) 100vw, 300px"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-gray-200 text-metricsText">
@@ -290,10 +294,13 @@ export default function MainHome() {
 
                         <div className="relative h-48 w-full bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                           {imageUrl ? (
-                            <img
+                            <Image
                               src={imageUrl}
                               alt={post.title}
-                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              fill
+                              quality={65}
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              sizes="(max-width: 768px) 100vw, 300px"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-gray-200 text-metricsText">
@@ -387,10 +394,13 @@ export default function MainHome() {
             return (
               <Link key={category.id} href={`/posts/${categoryLink}`}>
                 <div className="group relative h-32 sm:h-40 overflow-hidden rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-containerColor/50">
-                  <img
+                  <Image
                     src={imageUrl}
                     alt={category.name}
-                    className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    fill
+                    quality={65}
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end justify-start p-4">
                     <span className="text-white font-bold text-base sm:text-lg leading-tight">

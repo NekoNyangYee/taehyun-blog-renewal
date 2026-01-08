@@ -65,6 +65,23 @@ export default function RootLayout({
 
         <link rel="icon" href="/logo.png" type="image/png" />
 
+        {/* LCP 이미지 Preload */}
+        <link
+          rel="preload"
+          as="image"
+          href="/profile.webp"
+          fetchPriority="high"
+        />
+
+        {/* Preconnect to external CDNs */}
+        <link rel="preconnect" href="https://cdn.mos.cms.futurecdn.net" />
+        <link rel="preconnect" href="https://s3.ap-northeast-2.amazonaws.com" />
+        <link rel="preconnect" href="https://img.freepik.com" />
+        <link
+          rel="preconnect"
+          href="https://odflryzaijseaabpixhw.supabase.co"
+        />
+
         {/* ✅ Highlight.js CSS (테마) */}
         <link
           rel="stylesheet"
