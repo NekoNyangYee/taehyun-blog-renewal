@@ -51,7 +51,7 @@ export default function ProfileDetailPage() {
 
   return (
     <div className="w-full h-full flex flex-col gap-6 bg-background z-0">
-      <div className="relative w-full h-[500px] bg-center bg-cover bg-no-repeat bg-[url('/profile.jpg')]">
+      <div className="relative w-full h-[500px] bg-center bg-cover bg-no-repeat bg-[url('/profile.webp')]">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white z-10" />
         <div className="relative z-20 w-full h-full flex items-end justify-start p-8">
           <div className="text-gray-800 space-y-2">
