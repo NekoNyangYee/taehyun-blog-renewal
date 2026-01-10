@@ -3,11 +3,23 @@
 import { CornerDownRight, Search } from "lucide-react";
 import { useState, useRef, useEffect, use } from "react";
 import { createPortal } from "react-dom";
-import { usePostStore } from "@components/store/postStore";
-import { useCommentStore } from "@components/store/commentStore";
-import { useCategoriesStore } from "@components/store/categoriesStore";
 import { useSessionStore } from "@components/store/sessionStore";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import {
+  postsQueryKey,
+  fetchPostsQueryFn,
+  bookmarkQueryKey,
+  fetchBookmarksQueryFn,
+} from "@components/queries/postQueries";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
+import {
+  commentsQueryKey,
+  fetchCommentsQueryFn,
+} from "@components/queries/commentQueries";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,11 +31,35 @@ export default function SearchBar() {
   const searchInputRef = useRef<HTMLDivElement>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
-  // zustand store에서 데이터 구독
-  const { posts, bookmarks, fetchPosts, fetchBookmarkPosts } = usePostStore();
-  const { comments, fetchComments } = useCommentStore();
-  const { myCategories } = useCategoriesStore();
   const { session } = useSessionStore();
+  const userId = session?.user?.id;
+
+  // ✅ TanStack Query로 데이터 가져오기
+  const { data: posts = [] } = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+    enabled: isVisible, // 검색 모달이 열릴 때만 데이터 로드
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+    enabled: isVisible,
+  });
+
+  const { data: bookmarks = [] } = useQuery({
+    queryKey: bookmarkQueryKey(userId),
+    queryFn: () => fetchBookmarksQueryFn(userId),
+    enabled: isVisible && Boolean(userId),
+  });
+
+  const postIds = posts.map((post) => post.id);
+
+  const { data: comments = [] } = useQuery({
+    queryKey: commentsQueryKey(postIds),
+    queryFn: () => fetchCommentsQueryFn(postIds),
+    enabled: isVisible && postIds.length > 0,
+  });
 
   // 북마크된 게시물만 추출
   const bookmarkedPosts = posts.filter((post) => bookmarks.includes(post.id));
@@ -58,7 +94,7 @@ export default function SearchBar() {
 
   // posts에서 카테고리 id로 카테고리 이름 찾기
   const getCategoryName = (post: any) => {
-    const category = myCategories.find((cat) => cat.id === post.category_id);
+    const category = categories.find((cat) => cat.id === post.category_id);
     return category ? category.name : "";
   };
 
@@ -116,21 +152,6 @@ export default function SearchBar() {
       if (closeTimeout.current) clearTimeout(closeTimeout.current);
     };
   }, [isOpen, isVisible]);
-
-  // 데이터가 없으면 fetch
-  useEffect(() => {
-    if (isVisible && posts.length === 0) fetchPosts();
-    if (isVisible && comments.length === 0 && posts.length > 0) {
-      fetchComments(posts.map((post) => post.id).join(","));
-    }
-    // 북마크 fetch는 필요시 추가
-  }, [isVisible, posts, comments, fetchPosts, fetchComments]);
-
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchBookmarkPosts(session.user.id);
-    }
-  }, [session, fetchBookmarkPosts]);
 
   const popup = (
     <div className="fixed inset-0 z-50">
@@ -194,9 +215,9 @@ export default function SearchBar() {
                           <div className="flex flex-col gap-2 flex-1">
                             <span className="text-sm text-gray-500">
                               {
-                                myCategories.filter(
+                                categories.filter(
                                   (cat) => cat.id === post.category_id
-                                )[0].name
+                                )[0]?.name
                               }
                             </span>
                             <span className="font-semibold truncate max-w-60">
@@ -205,7 +226,7 @@ export default function SearchBar() {
                           </div>
                           <img
                             src={
-                              myCategories.find(
+                              categories.find(
                                 (cat) => cat.id === post.category_id
                               )?.thumbnail
                             }
@@ -252,9 +273,9 @@ export default function SearchBar() {
                           <div className="flex flex-col gap-2 flex-1">
                             <span className="text-sm text-gray-500">
                               {
-                                myCategories.filter(
+                                categories.filter(
                                   (cat) => cat.id === post.category_id
-                                )[0].name
+                                )[0]?.name
                               }
                             </span>
                             <span className="font-semibold truncate max-w-60">
@@ -263,7 +284,7 @@ export default function SearchBar() {
                           </div>
                           <img
                             src={
-                              myCategories.find(
+                              categories.find(
                                 (cat) => cat.id === post.category_id
                               )?.thumbnail
                             }

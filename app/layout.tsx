@@ -89,14 +89,14 @@ export default function RootLayout({
         />
       </head>
       <body className="flex flex-col h-screen">
-        <Header />
         <ReactQueryProvider>
+          <Header />
           <div className="flex flex-1  max-w-[90rem] box-border mx-auto w-full pt-[65px]">
             <NavBar />
             <Suspense fallback={<PageLoading />}>{children}</Suspense>
           </div>
+          <Footer />
         </ReactQueryProvider>
-        <Footer />
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
           strategy="afterInteractive"

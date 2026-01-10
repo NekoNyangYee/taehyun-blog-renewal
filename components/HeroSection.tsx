@@ -3,7 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
-import { usePostStore } from "@components/store/postStore";
+import { useQuery } from "@tanstack/react-query";
+import {
+  postsQueryKey,
+  fetchPostsQueryFn,
+} from "@components/queries/postQueries";
 
 const formatMetric = (value: number) => {
   if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
@@ -11,7 +15,10 @@ const formatMetric = (value: number) => {
 };
 
 export default function HeroSection() {
-  const { posts } = usePostStore();
+  const { data: posts = [] } = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+  });
 
   const { totalPosts, totalLikes, totalViews } = useMemo(() => {
     const totalPosts = posts.length;

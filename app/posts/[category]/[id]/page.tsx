@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  PostState,
-  PostStateWithoutContents,
-  usePostStore,
-} from "@components/store/postStore";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { PostState } from "@components/types/post";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useCategoriesStore } from "@components/store/categoriesStore";
 import dayjs, { formatDate } from "@components/lib/util/dayjs";
 import Link from "next/link";
 import {
@@ -28,14 +23,11 @@ import PageLoading from "@components/components/loading/PageLoading";
 import { Button } from "@components/components/ui/button";
 import { useSessionStore } from "@components/store/sessionStore";
 import { cn } from "@components/lib/utils";
-import { useCommentStore } from "@components/store/commentStore";
-import { Switch } from "@components/components/ui/switch";
 import { Textarea } from "@components/components/ui/textarea";
 import Image from "next/image";
 import { useUIStore } from "@components/store/postLoadingStore";
 import { lowerURL } from "@components/lib/util/lowerURL";
 import NotFound from "@components/app/not-found";
-import { useProfileStore } from "@components/store/profileStore";
 import { GotoTop } from "@components/components/GoToTop";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -43,8 +35,6 @@ import {
   postsQueryKey,
   fetchPostByIdQueryFn,
   postDetailQueryKey,
-  incrementViewCountMutationFn,
-  toggleLikeMutationFn,
 } from "@components/queries/postQueries";
 import {
   categoriesQueryKey,
@@ -54,6 +44,18 @@ import {
   commentsQueryKey,
   fetchCommentsQueryFn,
 } from "@components/queries/commentQueries";
+import {
+  useIncrementViewCount,
+  useToggleLike,
+} from "@components/queries/postMutations";
+import {
+  useAddComment,
+  useDeleteComment,
+} from "@components/queries/commentMutations";
+import {
+  profileQueryKey,
+  fetchProfileQueryFn,
+} from "@components/queries/profileQueries";
 
 interface Heading {
   id: string;
@@ -111,12 +113,7 @@ function RenderedContent({ html }: { html: string }) {
 }
 
 export default function PostDetailPage() {
-  const { posts, setPostsFromQuery, updatePostMetrics } = usePostStore();
-  const { myCategories, setCategoriesFromQuery } = useCategoriesStore();
   const { session } = useSessionStore();
-  const { comments, addComment, deleteComment, setCommentsFromQuery } =
-    useCommentStore();
-  const { profiles, fetchProfiles } = useProfileStore();
   const pathname = usePathname();
   const router = useRouter();
   const params = useParams();
@@ -142,75 +139,49 @@ export default function PostDetailPage() {
   const queryClient = useQueryClient();
   const userId = session?.user?.id;
 
-  const postsQuery = useQuery({
+  // ✅ TanStack Query로 데이터 가져오기
+  const { data: posts = [] } = useQuery({
     queryKey: postsQueryKey,
     queryFn: fetchPostsQueryFn,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
   });
 
-  useEffect(() => {
-    if (postsQuery.data) {
-      setPostsFromQuery(postsQuery.data);
-    }
-  }, [postsQuery.data, setPostsFromQuery]);
-
-  const categoriesQuery = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: categoriesQueryKey,
     queryFn: fetchCategoriesQueryFn,
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60,
   });
-
-  useEffect(() => {
-    if (categoriesQuery.data) {
-      setCategoriesFromQuery(categoriesQuery.data);
-    }
-  }, [categoriesQuery.data, setCategoriesFromQuery]);
 
   const resolvedPostId = Array.isArray(id) ? id[0] : id;
   const numericPostId = Number(resolvedPostId);
   const hasValidPostId = Number.isFinite(numericPostId);
-  const fallbackCommentsKey = commentsQueryKey("no-id");
-  const activeCommentsKey = hasValidPostId
-    ? commentsQueryKey([numericPostId])
-    : fallbackCommentsKey;
 
   const postDetailQuery = useQuery({
     queryKey: postDetailQueryKey(numericPostId),
     queryFn: () => fetchPostByIdQueryFn(numericPostId),
     enabled: hasValidPostId,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
   });
 
-  const commentsQuery = useQuery({
-    queryKey: activeCommentsKey,
+  const { data: comments = [] } = useQuery({
+    queryKey: commentsQueryKey([numericPostId]),
     queryFn: () => fetchCommentsQueryFn([numericPostId]),
     enabled: hasValidPostId,
-    staleTime: 1000 * 60,
-    gcTime: 1000 * 60 * 5,
   });
 
+  // ✅ 게시물 작성자 프로필 가져오기
+  const { data: authorProfiles = [] } = useQuery({
+    queryKey: profileQueryKey(post?.author_id),
+    queryFn: () => fetchProfileQueryFn(post?.author_id),
+    enabled: !!post?.author_id,
+  });
+
+  const authorProfile = authorProfiles[0];
+
+  // ✅ Mutation hooks
+  const viewCountMutation = useIncrementViewCount();
+  const toggleLikeMutation = useToggleLike();
+  const addCommentMutation = useAddComment([numericPostId]);
+  const deleteCommentMutation = useDeleteComment([numericPostId]);
+
   const isHydratingPost = postDetailQuery.isLoading && !postDetailQuery.data;
-
-  useEffect(() => {
-    if (commentsQuery.data) {
-      setCommentsFromQuery(commentsQuery.data);
-    }
-  }, [commentsQuery.data, setCommentsFromQuery]);
-
-  useEffect(() => {
-    if (postDetailQuery.data) {
-      setPost(postDetailQuery.data);
-      updatePostMetrics({
-        id: postDetailQuery.data.id,
-        view_count: postDetailQuery.data.view_count,
-        like_count: postDetailQuery.data.like_count,
-        liked_by_user: postDetailQuery.data.liked_by_user,
-      });
-    }
-  }, [postDetailQuery.data, setPost, updatePostMetrics]);
 
   useEffect(() => {
     if (postDetailQuery.error) {
@@ -221,24 +192,11 @@ export default function PostDetailPage() {
     }
   }, [postDetailQuery.error, setPostLoading]);
 
-  const postsReady = posts.length > 0;
-  const categoriesReady = myCategories.length > 0;
-
-  const viewCountMutation = useMutation({
-    mutationFn: incrementViewCountMutationFn,
-  });
-
-  const toggleLikeMutation = useMutation({
-    mutationFn: toggleLikeMutationFn,
-  });
-
-  const invalidateCommentsCache = () => {
-    if (hasValidPostId) {
-      queryClient.invalidateQueries({
-        queryKey: commentsQueryKey([numericPostId]),
-      });
+  useEffect(() => {
+    if (postDetailQuery.data) {
+      setPost(postDetailQuery.data);
     }
-  };
+  }, [postDetailQuery.data]);
 
   useEffect(() => {
     setPostLoading(isHydratingPost);
@@ -254,17 +212,14 @@ export default function PostDetailPage() {
           setPost((prev) =>
             prev ? { ...prev, view_count: newViewCount } : prev
           );
-          updatePostMetrics({
-            id: post.id,
-            view_count: newViewCount,
-          });
         } catch (error) {
           console.error("조회수 증가 실패:", error);
         }
       };
       incrementView();
     }
-  }, [post?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id, hasIncremented]);
 
   // 본문 내용이 실제로 바뀔 때만 목차 재계산 (좋아요로 인한 불필요한 재계산 방지)
   useEffect(() => {
@@ -353,7 +308,7 @@ export default function PostDetailPage() {
     scrollToHash(); // 실행
   }, [updatedContent]);
 
-  const category = myCategories.find((cat) => cat.id === post?.category_id);
+  const category = categories.find((cat) => cat.id === post?.category_id);
   const imageUrl = category?.thumbnail;
 
   if (isNotFound) {
@@ -381,7 +336,7 @@ export default function PostDetailPage() {
   });
 
   const postCategory = (categoryId: string | number) => {
-    const category = myCategories.find((cat) => cat.id === categoryId);
+    const category = categories.find((cat) => cat.id === categoryId);
     return category?.name || "카테고리 없음";
   };
 
@@ -411,7 +366,6 @@ export default function PostDetailPage() {
       {
         onSuccess: (metrics) => {
           setPost((prev) => (prev ? { ...prev, ...metrics } : prev));
-          updatePostMetrics(metrics);
           setIsHeartClicked(metrics.liked_by_user?.includes(userId) ?? false);
         },
         onError: (error) => {
@@ -424,36 +378,31 @@ export default function PostDetailPage() {
   const handleSubmitReply = async () => {
     if (comment.trim() === "") {
       alert("댓글을 입력하세요.");
+      return;
     }
 
     if (!comment || !session?.user || !post?.id) return;
 
     const author_name: string =
       session?.user?.user_metadata?.full_name || "익명";
-    await addComment({
+
+    await addCommentMutation.mutateAsync({
       author_id: session?.user.id,
       author_name,
       profile_image: session?.user.user_metadata.avatar_url ?? "",
       post_id: post?.id,
-      parent_id: null, // ✅ 부모 댓글이 없으므로 null 설정
+      parent_id: null,
       content: comment,
-      created_at: dayjs().tz("Asia/Seoul").toDate(), // ✅ KST 변환 후 `Date` 객체로 저장
-      updated_at: dayjs().tz("Asia/Seoul").toDate(),
-      status: !isStatus, // ✅ status 추가
+      status: !isStatus,
     });
 
     setComment("");
-    invalidateCommentsCache();
   };
 
   const deleteHandleComment = async (commentId: string | number) => {
-    // 현재 접속한 유저만 보이게 설정
     if (!commentId) return;
     if (confirm("정말 삭제하시겠습니까?")) {
-      await deleteComment(commentId); // ✅ commentId를 사용하여 삭제
-      invalidateCommentsCache();
-    } else {
-      return;
+      await deleteCommentMutation.mutateAsync(commentId);
     }
   };
 
@@ -468,6 +417,7 @@ export default function PostDetailPage() {
   const handleSubmitSubCommment = async (parentId: number) => {
     if (replyContent.trim() === "") {
       alert("답글을 입력하세요.");
+      return;
     }
 
     if (!replyContent || !session?.user || !post?.id) return;
@@ -475,21 +425,18 @@ export default function PostDetailPage() {
     const author_name: string =
       session?.user?.user_metadata?.full_name || "익명";
 
-    await addComment({
+    await addCommentMutation.mutateAsync({
       author_id: session?.user.id,
       author_name,
       profile_image: session?.user.user_metadata.avatar_url ?? "",
       parent_id: parentId,
       post_id: post?.id,
       content: replyContent,
-      created_at: dayjs().tz("Asia/Seoul").toDate(),
-      updated_at: dayjs().tz("Asia/Seoul").toDate(),
-      status: !isReplyStatus, // ✅ isReplyStatus 사용
+      status: !isReplyStatus,
     });
 
     setReplyContent("");
     setReplyingTo(null);
-    invalidateCommentsCache();
   };
 
   const toggleReply = (commentId: number) => {
@@ -549,37 +496,31 @@ export default function PostDetailPage() {
         {headingGroups.length > 0 && (
           <aside className="flex flex-col gap-2 lg:w-[300px] lg:sticky top-20 self-start p-4 bg-white border border-containerColor rounded-lg shadow-md w-full">
             <h3 className="text-lg font-semibold m-0">목차</h3>
-            <p className="flex flex-col gap-4">
+            <nav className="flex flex-col gap-4">
               {headingGroups.map((group, index) => (
                 <div key={group.h2.id} className="flex flex-col gap-2">
-                  <li className="text-sm font-bold cursor-pointer hover:underline list-none">
-                    <button
-                      onClick={() => scrollToHeading(group.h2.id)}
-                      className="block w-full text-left"
-                    >
-                      {`${index + 1}. ${group.h2.text}`}
-                    </button>
-                  </li>
+                  <button
+                    onClick={() => scrollToHeading(group.h2.id)}
+                    className="text-sm font-bold cursor-pointer hover:underline text-left"
+                  >
+                    {`${index + 1}. ${group.h2.text}`}
+                  </button>
                   {group.h3.length > 0 && (
-                    <ul className="ml-2 flex flex-col gap-4">
+                    <div className="ml-2 flex flex-col gap-4">
                       {group.h3.map((subHeading) => (
-                        <li
+                        <button
                           key={subHeading.id}
-                          className="text-xs text-gray-600 cursor-pointer hover:underline"
+                          onClick={() => scrollToHeading(subHeading.id)}
+                          className="text-xs text-gray-600 cursor-pointer hover:underline text-left"
                         >
-                          <button
-                            onClick={() => scrollToHeading(subHeading.id)}
-                            className="block w-full text-left"
-                          >
-                            {subHeading.text}
-                          </button>
-                        </li>
+                          {subHeading.text}
+                        </button>
                       ))}
-                    </ul>
+                    </div>
                   )}
                 </div>
               ))}
-            </p>
+            </nav>
           </aside>
         )}
       </div>
@@ -587,7 +528,7 @@ export default function PostDetailPage() {
         {previousPage && (
           <Link
             href={`/posts/${lowerURL(
-              myCategories.find((cat) => cat.id === previousPage.category_id)
+              categories.find((cat) => cat.id === previousPage.category_id)
                 ?.name || lowerURL(category?.name || "")
             )}/${previousPage.id}`}
             className="bg-searchInput p-container rounded-container flex-1 w-full max-w-full md:max-w-[50%] border border-gray-300"
@@ -606,8 +547,8 @@ export default function PostDetailPage() {
         {nextPage && (
           <Link
             href={`/posts/${lowerURL(
-              myCategories.find((cat) => cat.id === nextPage.category_id)
-                ?.name || lowerURL(category?.name || "")
+              categories.find((cat) => cat.id === nextPage.category_id)?.name ||
+                lowerURL(category?.name || "")
             )}/${nextPage.id}`}
             className="bg-searchInput p-container rounded-container flex-1 w-full max-w-full md:max-w-[50%] border border-gray-300"
           >
@@ -648,10 +589,7 @@ export default function PostDetailPage() {
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-full overflow-hidden shadow-md flex-shrink-0">
               <Image
-                src={
-                  profiles.find((profile) => profile.id === post?.author_id)
-                    ?.profile_image || "/default.png"
-                }
+                src={authorProfile?.profile_image || "/default.png"}
                 alt="작성자 프로필"
                 width={80}
                 height={80}
@@ -663,8 +601,7 @@ export default function PostDetailPage() {
                 작성자
               </span>
               <p className="text-lg font-bold text-gray-900">
-                {profiles.find((profile) => profile.id === post?.author_id)
-                  ?.nickname || "(알 수 없음)"}
+                {authorProfile?.nickname || "(알 수 없음)"}
               </p>
             </div>
           </div>

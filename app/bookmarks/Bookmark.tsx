@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePostStore } from "@components/store/postStore";
 import { useSessionStore } from "@components/store/sessionStore";
-import { useCategoriesStore } from "@components/store/categoriesStore";
 import Link from "next/link";
 import {
   EyeIcon,
@@ -12,25 +9,66 @@ import {
   BookmarkIcon,
   ListXIcon,
 } from "lucide-react";
-import { cn } from "@components/lib/utils"; // Tailwind classnames 유틸
-import { useCommentStore } from "@components/store/commentStore";
+import { cn } from "@components/lib/utils";
 import { formatDate } from "@components/lib/util/dayjs";
+import { useQuery } from "@tanstack/react-query";
+import {
+  postsQueryKey,
+  fetchPostsQueryFn,
+  bookmarkQueryKey,
+  fetchBookmarksQueryFn,
+} from "@components/queries/postQueries";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
+import {
+  commentsQueryKey,
+  fetchCommentsQueryFn,
+} from "@components/queries/commentQueries";
+import {
+  useAddBookmark,
+  useRemoveBookmark,
+} from "@components/queries/postMutations";
+import { useMemo } from "react";
 
 export default function BookMarkDetailPage() {
-  const { bookmarks, fetchBookmarkPosts } = usePostStore();
-  const { posts, addBookmark, removeBookmark, fetchPosts } = usePostStore();
-  const { myCategories } = useCategoriesStore();
-  const { comments } = useCommentStore();
   const { session } = useSessionStore();
   const userId = session?.user?.id;
 
-  useEffect(() => {
-    if (!userId) return;
-    fetchBookmarkPosts(userId); // 로그인한 사용자의 북마크 리스트 불러오기
-    fetchPosts(); // 전체 게시물 불러오기
-  }, [userId]);
+  // TanStack Query로 데이터 가져오기
+  const { data: posts = [] } = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+  });
 
-  const bookmarkedPosts = posts.filter((post) => bookmarks.includes(post.id));
+  const { data: categories = [] } = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+  });
+
+  const { data: bookmarks = [] } = useQuery({
+    queryKey: bookmarkQueryKey(userId),
+    queryFn: () => fetchBookmarksQueryFn(userId),
+    enabled: Boolean(userId),
+  });
+
+  const postIds = useMemo(() => posts.map((post) => post.id), [posts]);
+
+  const { data: comments = [] } = useQuery({
+    queryKey: commentsQueryKey(postIds),
+    queryFn: () => fetchCommentsQueryFn(postIds),
+    enabled: postIds.length > 0,
+  });
+
+  // Mutation hooks
+  const addBookmarkMutation = useAddBookmark(userId);
+  const removeBookmarkMutation = useRemoveBookmark(userId);
+
+  const bookmarkedPosts = useMemo(
+    () => posts.filter((post) => bookmarks.includes(post.id)),
+    [posts, bookmarks]
+  );
 
   if (bookmarkedPosts.length === 0) {
     return (
@@ -48,7 +86,7 @@ export default function BookMarkDetailPage() {
       <h2 className="text-2xl font-bold">북마크</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
         {bookmarkedPosts.map((post) => {
-          const category = myCategories.find(
+          const category = categories.find(
             (cat) => cat.id === post.category_id
           );
           const imageUrl = category?.thumbnail;
@@ -105,9 +143,17 @@ export default function BookMarkDetailPage() {
                             alert("로그인이 필요합니다.");
                             return;
                           }
-                          isBookmarked
-                            ? removeBookmark(userId, post.id)
-                            : addBookmark(userId, post.id);
+                          if (isBookmarked) {
+                            removeBookmarkMutation.mutate({
+                              userId,
+                              postId: post.id,
+                            });
+                          } else {
+                            addBookmarkMutation.mutate({
+                              userId,
+                              postId: post.id,
+                            });
+                          }
                         }}
                       >
                         <BookmarkIcon

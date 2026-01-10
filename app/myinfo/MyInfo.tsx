@@ -4,9 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSessionStore } from "@components/store/sessionStore";
 import { formatDate } from "@components/lib/util/dayjs";
-import { usePostStore } from "@components/store/postStore";
-import { useCategoriesStore } from "@components/store/categoriesStore";
-import { useCommentStore } from "@components/store/commentStore";
 import { lowerURL } from "@components/lib/util/lowerURL";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -27,6 +24,19 @@ import {
   X,
 } from "lucide-react";
 import { useProfileStore } from "@components/store/profileStore";
+import { useQuery } from "@tanstack/react-query";
+import {
+  postsQueryKey,
+  fetchPostsQueryFn,
+} from "@components/queries/postQueries";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
+import {
+  commentsQueryKey,
+  fetchCommentsQueryFn,
+} from "@components/queries/commentQueries";
 
 const PROVIDER_LABEL: Record<string, string> = {
   kakao: "카카오",
@@ -37,10 +47,23 @@ const PROVIDER_LABEL: Record<string, string> = {
 
 export default function MyInfoPage() {
   const { session, isLoading, fetchSession } = useSessionStore();
-  const { posts, fetchPosts } = usePostStore();
-  const { myCategories, fetchCategories } = useCategoriesStore();
-  const { comments, fetchComments } = useCommentStore();
   const { profiles, fetchProfiles, updateProfile } = useProfileStore();
+
+  // TanStack Query로 데이터 가져오기
+  const { data: posts = [] } = useQuery({
+    queryKey: postsQueryKey,
+    queryFn: fetchPostsQueryFn,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+  });
+
+  const { data: comments = [] } = useQuery({
+    queryKey: commentsQueryKey([]),
+    queryFn: () => fetchCommentsQueryFn([]),
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newBannerUrl, setNewBannerUrl] = useState("");
@@ -76,11 +99,6 @@ export default function MyInfoPage() {
     if (!session?.user?.id) return;
     fetchProfiles(session.user.id);
   }, [session?.user?.id, fetchProfiles]);
-
-  useEffect(() => {
-    fetchPosts();
-    fetchCategories();
-  }, [fetchPosts, fetchCategories]);
 
   const profile = useMemo(() => {
     const user = session?.user;
@@ -161,11 +179,6 @@ export default function MyInfoPage() {
     () => userPosts.map((post) => post.id).join(","),
     [userPosts]
   );
-
-  useEffect(() => {
-    if (!userPostIdsKey) return;
-    fetchComments(userPostIdsKey);
-  }, [userPostIdsKey, fetchComments]);
 
   const commentCountMap = useMemo(() => {
     const map = new Map<number, number>();
@@ -362,7 +375,7 @@ export default function MyInfoPage() {
               {sortedUserPosts.length > 0 ? (
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                   {sortedUserPosts.slice(0, 6).map((post) => {
-                    const category = myCategories.find(
+                    const category = categories.find(
                       (cat) => cat.id === post.category_id
                     );
                     const imageUrl = category?.thumbnail;

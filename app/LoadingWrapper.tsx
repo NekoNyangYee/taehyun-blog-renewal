@@ -17,7 +17,6 @@ export default function LoadingWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  const { setPostsFromQuery } = usePostStore();
   const [loading, setLoading] = useState(true);
   const [showNotFound, setShowNotFound] = useState(false);
 
@@ -27,12 +26,6 @@ export default function LoadingWrapper({
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
-
-  useEffect(() => {
-    if (postsQuery.data) {
-      setPostsFromQuery(postsQuery.data);
-    }
-  }, [postsQuery.data, setPostsFromQuery]);
 
   useEffect(() => {
     if (!postsQuery.isLoading) {
