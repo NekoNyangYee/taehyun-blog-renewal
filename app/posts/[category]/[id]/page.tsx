@@ -198,6 +198,30 @@ export default function PostDetailPage() {
     }
   }, [postDetailQuery.data]);
 
+  // ✅ URL 카테고리와 실제 게시물 카테고리 검증
+  useEffect(() => {
+    if (post && categories.length > 0 && urlCategory) {
+      const postCategory = categories.find(
+        (cat) => cat.id === post.category_id
+      );
+      const urlCategoryDecoded = Array.isArray(urlCategory)
+        ? decodeURIComponent(urlCategory[0])
+        : decodeURIComponent(urlCategory);
+
+      // lowerURL로 소문자 변환해서 비교
+      if (
+        postCategory &&
+        lowerURL(postCategory.name) !== urlCategoryDecoded.toLowerCase()
+      ) {
+        console.error("카테고리 불일치:", {
+          url: urlCategoryDecoded,
+          actual: postCategory.name,
+        });
+        setIsNotFound(true);
+      }
+    }
+  }, [post, categories, urlCategory]);
+
   useEffect(() => {
     setPostLoading(isHydratingPost);
   }, [isHydratingPost, setPostLoading]);
