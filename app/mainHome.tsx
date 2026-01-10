@@ -4,9 +4,6 @@ import Image from "next/image";
 import HeroSection from "@components/components/HeroSection";
 import { formatDate } from "@components/lib/util/dayjs";
 import { lowerURL } from "@components/lib/util/lowerURL";
-import { useCategoriesStore } from "@components/store/categoriesStore";
-import { useCommentStore } from "@components/store/commentStore";
-import { usePostStore } from "@components/store/postStore";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchPostsQueryFn,
@@ -33,10 +30,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function MainHome() {
-  const { posts, setPostsFromQuery } = usePostStore();
-  const { myCategories, setCategoriesFromQuery } = useCategoriesStore();
-  const { comments, setCommentsFromQuery } = useCommentStore();
-
   const latestScrollRef = useRef<HTMLDivElement>(null);
   const popularScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState({
@@ -78,51 +71,32 @@ export default function MainHome() {
     }
   };
 
-  const postsQuery = useQuery({
+  // TanStack Query로 데이터 가져오기
+  const { data: posts = [] } = useQuery({
     queryKey: postsQueryKey,
     queryFn: fetchPostsQueryFn,
-    staleTime: 1000 * 60 * 60, // 1시간
-    gcTime: 1000 * 60 * 60 * 24, // 24시간
   });
 
-  const categoriesQuery = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: categoriesQueryKey,
     queryFn: fetchCategoriesQueryFn,
-    staleTime: 1000 * 60 * 60 * 24, // 24시간
-    gcTime: 1000 * 60 * 60 * 24 * 7, // 7일
   });
 
   const postIds = useMemo(() => posts.map((post) => post.id), [posts]);
 
-  const commentsQuery = useQuery({
+  const { data: comments = [] } = useQuery({
     queryKey: commentsQueryKey(postIds),
     queryFn: () => fetchCommentsQueryFn(postIds),
     enabled: postIds.length > 0,
-    staleTime: 1000 * 60 * 30, // 30분
-    gcTime: 1000 * 60 * 60, // 1시간
   });
 
-  useEffect(() => {
-    if (postsQuery.data) {
-      setPostsFromQuery(postsQuery.data);
-    }
-  }, [postsQuery.data, setPostsFromQuery]);
-
-  useEffect(() => {
-    if (categoriesQuery.data) {
-      setCategoriesFromQuery(categoriesQuery.data);
-    }
-  }, [categoriesQuery.data, setCategoriesFromQuery]);
-
-  useEffect(() => {
-    if (commentsQuery.data) {
-      setCommentsFromQuery(commentsQuery.data);
-    }
-  }, [commentsQuery.data, setCommentsFromQuery]);
-
-  const popularPosts = [...posts]
-    .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
-    .slice(0, 4);
+  const popularPosts = useMemo(
+    () =>
+      [...posts]
+        .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
+        .slice(0, 4),
+    [posts]
+  );
 
   return (
     <div className="w-full flex flex-col gap-12 md:gap-16 p-container max-w-[90rem] mx-auto">
@@ -156,7 +130,7 @@ export default function MainHome() {
             >
               <div className="flex gap-6 pb-2 min-w-min">
                 {posts.slice(0, 7).map((post) => {
-                  const category = myCategories.find(
+                  const category = categories.find(
                     (cat) => cat.id === post.category_id
                   );
                   const imageUrl = category?.thumbnail;
@@ -274,7 +248,7 @@ export default function MainHome() {
             >
               <div className="flex gap-6 pb-2 min-w-min">
                 {popularPosts.slice(0, 7).map((post) => {
-                  const category = myCategories.find(
+                  const category = categories.find(
                     (cat) => cat.id === post.category_id
                   );
                   const imageUrl = category?.thumbnail;
@@ -387,7 +361,7 @@ export default function MainHome() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {myCategories.map((category) => {
+          {categories.map((category) => {
             const imageUrl = category?.thumbnail;
             const categoryLink = lowerURL(category.name);
 

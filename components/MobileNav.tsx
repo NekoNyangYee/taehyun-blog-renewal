@@ -1,6 +1,5 @@
 "use client";
 
-import { useCategoriesStore } from "@components/store/categoriesStore";
 import {
   Grid2X2Icon,
   HomeIcon,
@@ -20,6 +19,11 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { supabase } from "@components/lib/supabaseClient";
 import { useSessionStore } from "@components/store/sessionStore";
+import { useQuery } from "@tanstack/react-query";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
 
 export default function MobileNavBar({
   isOpen,
@@ -30,15 +34,22 @@ export default function MobileNavBar({
 }) {
   const currentPath: string = usePathname();
   const router = useRouter();
-  const { fetchCategories } = useCategoriesStore();
   const { session, addSession } = useSessionStore();
   const [profileName, setProfileName] = useState<string>("");
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
+  // 클라이언트 마운트 확인
   useEffect(() => {
-    fetchCategories();
+    setIsClient(true);
   }, []);
+
+  // TanStack Query로 카테고리 가져오기
+  const { data: categories = [] } = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -138,7 +149,7 @@ export default function MobileNavBar({
             <Grid2X2Icon size={18} />
             <span className="truncate">게시물</span>
           </Link>
-          {session && (
+          {isClient && session && (
             <Link
               href={"/bookmarks"}
               className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
@@ -172,7 +183,7 @@ export default function MobileNavBar({
           </Link>
         </div>
         <div className="flex flex-col gap-2 w-full p-container border-t border-containerColor items-center">
-          {session && (
+          {isClient && session && (
             <div className="flex gap-2 mb-4 w-full">
               <img
                 src={session?.user?.user_metadata?.avatar_url || "/default.png"}
@@ -189,7 +200,7 @@ export default function MobileNavBar({
               </div>
             </div>
           )}
-          {session ? (
+          {isClient && session ? (
             <>
               <Button
                 onClick={handleLogout}

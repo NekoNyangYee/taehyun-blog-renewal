@@ -2,8 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { usePostStore } from "@components/store/postStore";
-import { useCategoriesStore } from "@components/store/categoriesStore";
 import CategoryButtons from "@components/components/CategoryButtons";
 import dayjs, { formatDate } from "@components/lib/util/dayjs";
 import {
@@ -12,7 +10,6 @@ import {
   HeartIcon,
   MessageSquareTextIcon,
 } from "lucide-react";
-import { useCommentStore } from "@components/store/commentStore";
 import Link from "next/link";
 import {
   Select,
@@ -34,6 +31,14 @@ import {
   categoriesQueryKey,
   fetchCategoriesQueryFn,
 } from "@components/queries/categoryQueries";
+import {
+  commentsQueryKey,
+  fetchCommentsQueryFn,
+} from "@components/queries/commentQueries";
+import {
+  useAddBookmark,
+  useRemoveBookmark,
+} from "@components/queries/postMutations";
 
 export default function CategoryPage({
   params,
@@ -43,84 +48,55 @@ export default function CategoryPage({
   const pathname = usePathname();
   const { session } = useSessionStore();
   const userId = session?.user?.id;
-  const {
-    posts,
-    bookmarks,
-    addBookmark,
-    removeBookmark,
-    setPostsFromQuery,
-    setBookmarksFromQuery,
-  } = usePostStore();
-  const { myCategories, setCategoriesFromQuery } = useCategoriesStore();
-  const { comments, fetchComments } = useCommentStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     decodeURIComponent(params.category)
   );
   const [sortOrder, setSortOrder] = useState<string>("new-sort");
-  const postsQuery = useQuery({
+
+  // ✅ TanStack Query로 데이터 가져오기
+  const { data: posts = [], isLoading: isPostsLoading } = useQuery({
     queryKey: postsQueryKey,
     queryFn: fetchPostsQueryFn,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
   });
 
-  const bookmarksQuery = useQuery({
+  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+  });
+
+  const { data: bookmarks = [] } = useQuery({
     queryKey: bookmarkQueryKey(userId),
     queryFn: () => fetchBookmarksQueryFn(userId),
     enabled: Boolean(userId),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
   });
 
-  const categoriesQuery = useQuery({
-    queryKey: categoriesQueryKey,
-    queryFn: fetchCategoriesQueryFn,
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60,
+  const postIds = useMemo(() => posts.map((post) => post.id), [posts]);
+
+  const { data: comments = [] } = useQuery({
+    queryKey: commentsQueryKey(postIds),
+    queryFn: () => fetchCommentsQueryFn(postIds),
+    enabled: postIds.length > 0,
   });
 
-  useEffect(() => {
-    if (postsQuery.data) {
-      setPostsFromQuery(postsQuery.data);
-    }
-  }, [postsQuery.data, setPostsFromQuery]);
-
-  useEffect(() => {
-    if (categoriesQuery.data) {
-      setCategoriesFromQuery(categoriesQuery.data);
-    }
-  }, [categoriesQuery.data, setCategoriesFromQuery]);
-
-  useEffect(() => {
-    if (userId && bookmarksQuery.data) {
-      setBookmarksFromQuery(bookmarksQuery.data);
-    }
-    if (!userId) {
-      setBookmarksFromQuery([]);
-    }
-  }, [bookmarksQuery.data, setBookmarksFromQuery, userId]);
-
-  useEffect(() => {
-    if (posts.length > 0) {
-      const postIds = posts.map((post) => post.id).join(",");
-      fetchComments(postIds);
-    }
-  }, [posts]); // ✅ posts가 변경될 때만 실행
+  // ✅ Mutation hooks
+  const addBookmarkMutation = useAddBookmark(userId);
+  const removeBookmarkMutation = useRemoveBookmark(userId);
 
   useEffect(() => {
     const categoryFromURL = decodeURIComponent(pathname.split("/").pop() || "");
     if (categoryFromURL !== "posts" && selectedCategory !== categoryFromURL) {
       setSelectedCategory(categoryFromURL);
     }
-  }, [pathname]);
+  }, [pathname, selectedCategory]);
 
-  const filteredPosts = posts.filter((post) => {
-    const category = myCategories.find((cat) => cat.id === post.category_id);
-    return category?.name.toLowerCase() === selectedCategory?.toLowerCase();
-  });
+  // ✅ 필터링 및 정렬 로직
+  const filteredAndSortedPosts = useMemo(() => {
+    let filtered = posts.filter((post) => {
+      const category = categories.find((cat) => cat.id === post.category_id);
+      return category?.name.toLowerCase() === selectedCategory?.toLowerCase();
+    });
 
-  const sortedPosts = useMemo(() => {
-    return [...filteredPosts].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const dateA = dayjs(a.created_at).toDate();
       const dateB = dayjs(b.created_at).toDate();
 
@@ -135,9 +111,9 @@ export default function CategoryPage({
       }
       return 0;
     });
-  }, [filteredPosts, sortOrder]); // 🔥 posts와 정렬 기준이 바뀔 때만 재계산
+  }, [posts, categories, selectedCategory, sortOrder]);
 
-  const isPending = postsQuery.isLoading || categoriesQuery.isLoading;
+  const isPending = isPostsLoading || isCategoriesLoading;
 
   return (
     <div className="flex flex-col gap-4 p-container w-full">
@@ -159,111 +135,116 @@ export default function CategoryPage({
           </SelectContent>
         </Select>
       </div>
-      {isPending && posts.length === 0 ? (
+      {isPending ? (
         <div className="w-full h-[386px] flex items-center justify-center border border-containerColor rounded-container">
           <p className="text-gray-500 text-center">로딩 중...</p>
         </div>
-      ) : (
-        <>
-          {filteredPosts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
-              {sortedPosts.length > 0
-                ? sortedPosts.map((post) => {
-                    const category = myCategories.find(
-                      (cat) => cat.id === post.category_id
-                    );
-                    const imageUrl = category?.thumbnail;
-                    const currentCategoryName = category?.name.toLowerCase();
-                    const categoryName = category?.name || "미분류";
-                    const isBookmarked = bookmarks.includes(post.id);
+      ) : filteredAndSortedPosts.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
+          {filteredAndSortedPosts.map((post) => {
+            const category = categories.find(
+              (cat) => cat.id === post.category_id
+            );
+            const imageUrl = category?.thumbnail;
+            const currentCategoryName = category?.name.toLowerCase();
+            const categoryName = category?.name || "미분류";
+            const isBookmarked = bookmarks.includes(post.id);
 
-                    return (
-                      <Link
-                        key={post.id}
-                        href={`/posts/${currentCategoryName}/${post.id}`}
-                      >
-                        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-containerColor/70 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-                          <div className="relative h-40 w-full bg-gray-100">
-                            {imageUrl ? (
-                              <img
-                                src={imageUrl}
-                                alt="Post Thumbnail"
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-metricsText">
-                                이미지 없음
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-1 flex-col gap-3 p-5">
-                            <div className="flex items-center justify-between">
-                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                                {categoryName}
-                              </span>
-                              {session && (
-                                <BookmarkIcon
-                                  size={18}
-                                  className={cn(
-                                    isBookmarked
-                                      ? "fill-yellow-500 stroke-none"
-                                      : "fill-none"
-                                  )}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (!userId) {
-                                      alert("로그인이 필요합니다.");
-                                      return;
-                                    }
-                                    isBookmarked
-                                      ? removeBookmark(userId, post.id)
-                                      : addBookmark(userId, post.id);
-                                  }}
-                                />
-                              )}
-                            </div>
-                            <h3 className="truncate text-lg font-semibold leading-tight text-gray-900">
-                              {post.title}
-                            </h3>
-                            <p className="text-sm text-metricsText">
-                              by {post.author_name}
-                            </p>
-                            <p className="text-sm text-metricsText">
-                              {formatDate(post.created_at)}
-                            </p>
-                            <div className="mt-auto flex items-center gap-4 pt-3 text-sm text-metricsText">
-                              <span className="flex items-center gap-1">
-                                <EyeIcon size={16} />
-                                {post.view_count}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <HeartIcon size={16} />
-                                {post.like_count}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MessageSquareTextIcon size={16} />
-                                {
-                                  comments.filter(
-                                    (comment) => comment.post_id === post.id
-                                  ).length
-                                }
-                              </span>
-                            </div>
-                          </div>
-                        </article>
-                      </Link>
-                    );
-                  })
-                : null}
-            </div>
-          ) : (
-            <div className="w-full h-[386px] flex items-center justify-center border border-containerColor rounded-container">
-              <p className="text-gray-500 text-center">
-                해당 카테고리에 게시물이 없습니다.
-              </p>
-            </div>
-          )}
-        </>
+            const handleToggleBookmark = async (e: React.MouseEvent) => {
+              e.preventDefault();
+              if (!userId) {
+                alert("로그인이 필요합니다.");
+                return;
+              }
+
+              if (isBookmarked) {
+                await removeBookmarkMutation.mutateAsync({
+                  userId,
+                  postId: post.id,
+                });
+              } else {
+                await addBookmarkMutation.mutateAsync({
+                  userId,
+                  postId: post.id,
+                });
+              }
+            };
+
+            return (
+              <Link
+                key={post.id}
+                href={`/posts/${currentCategoryName}/${post.id}`}
+              >
+                <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-containerColor/70 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="relative h-40 w-full bg-gray-100">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt="Post Thumbnail"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-metricsText">
+                        이미지 없음
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-5">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                        {categoryName}
+                      </span>
+                      {session && (
+                        <BookmarkIcon
+                          size={18}
+                          className={cn(
+                            isBookmarked
+                              ? "fill-yellow-500 stroke-none"
+                              : "fill-none"
+                          )}
+                          onClick={handleToggleBookmark}
+                        />
+                      )}
+                    </div>
+                    <h3 className="truncate text-lg font-semibold leading-tight text-gray-900">
+                      {post.title}
+                    </h3>
+                    <p className="text-sm text-metricsText">
+                      by {post.author_name}
+                    </p>
+                    <p className="text-sm text-metricsText">
+                      {formatDate(post.created_at)}
+                    </p>
+                    <div className="mt-auto flex items-center gap-4 pt-3 text-sm text-metricsText">
+                      <span className="flex items-center gap-1">
+                        <EyeIcon size={16} />
+                        {post.view_count}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <HeartIcon size={16} />
+                        {post.like_count}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquareTextIcon size={16} />
+                        {
+                          comments.filter(
+                            (comment) => comment.post_id === post.id
+                          ).length
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="w-full h-[386px] flex items-center justify-center border border-containerColor rounded-container">
+          <p className="text-gray-500 text-center">
+            해당 카테고리에 게시물이 없습니다.
+          </p>
+        </div>
       )}
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useCategoriesStore } from "@components/store/categoriesStore";
+import { useEffect, useState } from "react";
 import { useSessionStore } from "@components/store/sessionStore";
 import {
   Grid2X2Icon,
@@ -16,15 +15,30 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { supabase } from "@components/lib/supabaseClient";
+import { useQuery } from "@tanstack/react-query";
+import {
+  categoriesQueryKey,
+  fetchCategoriesQueryFn,
+} from "@components/queries/categoryQueries";
 
 export default function NavBar() {
   const currentPath: string = usePathname();
-  const { fetchCategories } = useCategoriesStore();
   const { session, isLoading, fetchSession, addSession } = useSessionStore();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  // 클라이언트 마운트 확인
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // TanStack Query로 카테고리 가져오기
+  const { data: categories = [] } = useQuery({
+    queryKey: categoriesQueryKey,
+    queryFn: fetchCategoriesQueryFn,
+  });
 
   useEffect(() => {
-    fetchCategories();
     fetchSession(); // ✅ 세션 동기화
   }, []);
 
@@ -65,17 +79,18 @@ export default function NavBar() {
                 <Grid2X2Icon size={18} />
                 <span className="truncate">게시물</span>
               </Link>
-              {session && ( // ✅ 세션 확인 후 북마크 탭 표시
-                <Link
-                  href={"/bookmarks"}
-                  className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
-                    "/bookmarks"
-                  )}`}
-                >
-                  <StarIcon size={18} />
-                  <span className="truncate">북마크</span>
-                </Link>
-              )}
+              {isClient &&
+                session && ( // ✅ 세션 확인 후 북마크 탭 표시
+                  <Link
+                    href={"/bookmarks"}
+                    className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
+                      "/bookmarks"
+                    )}`}
+                  >
+                    <StarIcon size={18} />
+                    <span className="truncate">북마크</span>
+                  </Link>
+                )}
               <Link
                 href={"/myinfo"}
                 className={`flex gap-2 items-center p-button justify-start rounded-button w-full h-10 ${isActive(
@@ -96,7 +111,7 @@ export default function NavBar() {
               </Link>
             </div>
             <div className="w-full p-container border-t border-containerColor">
-              {session && (
+              {isClient && session && (
                 <div className="flex gap-2 mb-4">
                   <img
                     src={
@@ -115,7 +130,7 @@ export default function NavBar() {
                   </div>
                 </div>
               )}
-              {session ? (
+              {isClient && session ? (
                 <Button
                   onClick={handleLogout}
                   className="w-full h-10 p-button border border-logoutColor bg-logoutButton text-logoutText flex items-center gap-2"
