@@ -17,7 +17,7 @@ export const fetchPostsQueryFn = async (): Promise<
   const { data, error } = await supabase
     .from("posts")
     .select(
-      "id, title, author_id, author_name, status, visibility, created_at, updated_at, view_count, like_count, category_id, liked_by_user"
+      "id, title, author_id, author_name, visibility, created_at, updated_at, view_count, like_count, category_id, liked_by_user"
     )
     .order("created_at", { ascending: false });
 
